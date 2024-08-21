@@ -1,0 +1,582 @@
+{
+	"info": {
+		"_postman_id": "bbcfc4fd-839a-40a8-bab8-6998594c7a31",
+		"name": "Church Player",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21995082"
+	},
+	"item": [
+		{
+			"name": "album",
+			"item": [
+				{
+					"name": "Find All",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/albums",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"albums"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/albums/:id",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"albums",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "3f4a95d0-b7df-490d-908c-f176c251d41d"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Album test\",\n    \"image_url\": \"url\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/albums",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"albums"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": \"ed36081c-2107-49d1-9fea-02bc96cb33ab\",\n    \"title\": \"Novo nome test\",\n    \"image_url\": \"novo url\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/albums",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"albums"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/albums/:id",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"albums",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "3f4a95d0-b7df-490d-908c-f176c251d41d"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "song",
+			"item": [
+				{
+					"name": "create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"file_name\": \"2 - song name\",\n    \"order_song\": 2,\n    \"album_id\": \"3f4a95d0-b7df-490d-908c-f176c251d41d\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/songs",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"songs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/songs/:id",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"songs",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "8b5697a2-aeb9-4e33-9391-48e4dd6bb018"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find All",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/songs",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"songs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": \"8b5697a2-aeb9-4e33-9391-48e4dd6bb018\",\n    \"title\": \"song name\",\n    \"number\": 0,\n    \"file\": \"song name\",\n    \"order_song\": 1,\n    \"album_id\": \"3f4a95d0-b7df-490d-908c-f176c251d41d\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/songs",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"songs"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Order",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"id\": \"8b5697a2-aeb9-4e33-9391-48e4dd6bb018\",\n        \"order_song\": 10\n    },\n    {\n        \"id\": \"a79deb5c-ce30-4c84-ba40-1c2c9f267f2b\",\n        \"order_song\": 9\n    }\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/songs/orders",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"songs",
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/songs/:id",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"songs",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "a79deb5c-ce30-4c84-ba40-1c2c9f267f2b"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "worship",
+			"item": [
+				{
+					"name": "Create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Album test\",\n    \"image_url\": \"url\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/worships",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"worships"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find All",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/worships",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"worships"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/worships/:id",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"worships",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "bcfac74f-f731-47ef-b988-1798568c9d4a"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": \"310256f8-098c-4fc8-a318-b6152b25f4b9\",\n    \"title\": \"New test\",\n    \"image_url\": \"new url\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/worships",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"worships"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/worships/:id",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"worships",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "310256f8-098c-4fc8-a318-b6152b25f4b9"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "moment",
+			"item": [
+				{
+					"name": "Create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"moment title\",\n    \"section_name\": \"section name 1\",\n    \"section_order\": 1,\n    \"order\": 2,\n    \"worship_id\": \"bcfac74f-f731-47ef-b988-1798568c9d4a\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/moments",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"moments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/moments/:id",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"moments",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "fb85f7d1-e560-46a3-8a9d-e5e8af8ceae3"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "FInd by worship ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/moments/worship/:id",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"moments",
+								"worship",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "bcfac74f-f731-47ef-b988-1798568c9d4a"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": \"fb85f7d1-e560-46a3-8a9d-e5e8af8ceae3\",\n    \"title\": \"new moment title\",\n    \"section_name\": \"new section name 1\",\n    \"section_order\": 2,\n    \"song_order\": 2,\n    \"song_id\": \"bcfac74f-f731-47ef-b988-1798568c9d4a\",\n    \"worship_id\": \"bcfac74f-f731-47ef-b988-1798568c9d4a\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/moments",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"moments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/moments/:id",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"moments",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "fb85f7d1-e560-46a3-8a9d-e5e8af8ceae3"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update order",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"id\": \"b724c83e-9ff0-4a0b-8183-fc5d6ffd862c\",\n        \"song_order\": 10\n    },\n    {\n        \"id\": \"306c12db-8b10-4c15-8c0a-dea946c6861e\",\n        \"song_order\": 14\n    }\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/moments/orders",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"moments",
+								"orders"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
