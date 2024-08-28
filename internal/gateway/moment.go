@@ -8,7 +8,7 @@ import (
 type Moment interface {
 	Create(moment *domain.Moment) error
 	FindByID(id string) (*domain.Moment, error)
-	FindAllByWorshipID(id string) (*[]domain.Moment, error)
+	FindAllBySectionID(id string) (*[]domain.Moment, error)
 	Update(moment *domain.Moment) error
 	UpdateOrder(momentOrderDTO *[]dto.MomentOrderDTO) error
 	Delete(id string) error

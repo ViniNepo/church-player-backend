@@ -21,7 +21,7 @@ func NewSongHandler(useCase usecase.SongUseCase) *SongHandler {
 }
 
 func (h *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var songDTO dto.CreateSongDTO
+	var songDTO []dto.CreateSongDTO
 
 	err := json.NewDecoder(r.Body).Decode(&songDTO)
 	if err != nil {
@@ -29,16 +29,18 @@ func (h *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	song, err := domain.NewSong(songDTO)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	for _, s := range songDTO {
+		song, err := domain.NewSong(s)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
-	err = h.songUseCase.Create(song)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
-		return
+		err = h.songUseCase.Create(song)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+			return
+		}
 	}
 	json.NewEncoder(w)
 }

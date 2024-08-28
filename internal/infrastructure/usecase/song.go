@@ -8,8 +8,9 @@ import (
 
 type SongUseCase interface {
 	Create(song *domain.Song) error
-	FindAll() (*[]domain.Song, error)
+	FindAll() (*[]dto.SongWithAlbumDTO, error)
 	FindByID(id string) (*domain.Song, error)
+	FindAllByAlbumID(id string) (*[]domain.Song, error)
 	Update(song *domain.Song) error
 	UpdateOrder(songUpdateOrderDTO *[]dto.SongUpdateOrderDTO) error
 	Delete(id string) error
@@ -27,12 +28,16 @@ func (s *songUseCase) Create(song *domain.Song) error {
 	return s.songGateway.Create(song)
 }
 
-func (s *songUseCase) FindAll() (*[]domain.Song, error) {
+func (s *songUseCase) FindAll() (*[]dto.SongWithAlbumDTO, error) {
 	return s.songGateway.FindAll()
 }
 
 func (s *songUseCase) FindByID(id string) (*domain.Song, error) {
 	return s.songGateway.FindByID(id)
+}
+
+func (s *songUseCase) FindAllByAlbumID(id string) (*[]domain.Song, error) {
+	return s.songGateway.FindAllByAlbumID(id)
 }
 
 func (s *songUseCase) Update(song *domain.Song) error {

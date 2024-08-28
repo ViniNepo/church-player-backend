@@ -21,7 +21,7 @@ func (s *MomentDBTestSuite) SetupSuite() {
 	s.Nil(err)
 	s.db = db
 
-	db.Exec("CREATE table moments (id varchar(255), title varchar(255), section_name varchar(255), section_order int, song_order int, song_id int, worship_id int,  FOREIGN KEY (worship_id) REFERENCES worships(id) ON DELETE CASCADE)")
+	db.Exec("CREATE table moments (id varchar(255), title varchar(255), song_order int, song_id int, section_id int,  FOREIGN KEY (section_id) REFERENCES sections(id) ON DELETE CASCADE)")
 	s.momentDB = sqlite.NewMomentDB(db)
 }
 
@@ -36,11 +36,8 @@ func TestMomentDBTestSuite(t *testing.T) {
 
 func (s *MomentDBTestSuite) TestCreate() {
 	moment, _ := domain.NewMoment(dto.CreateMomentDTO{
-		Title:        "new moment",
-		SectionName:  "inicio",
-		SectionOrder: 1,
-		SongOrder:    1,
-		WorshipID:    "id",
+		Title:     "new moment",
+		SectionID: "id",
 	})
 
 	err := s.momentDB.Create(moment)
@@ -49,11 +46,8 @@ func (s *MomentDBTestSuite) TestCreate() {
 
 func (s *MomentDBTestSuite) TestFindByID() {
 	moment, _ := domain.NewMoment(dto.CreateMomentDTO{
-		Title:        "new moment",
-		SectionName:  "inicio",
-		SectionOrder: 1,
-		SongOrder:    1,
-		WorshipID:    "id",
+		Title:     "new moment",
+		SectionID: "section id",
 	})
 
 	err := s.momentDB.Create(moment)
@@ -61,50 +55,20 @@ func (s *MomentDBTestSuite) TestFindByID() {
 
 	m, err := s.momentDB.FindByID(moment.ID)
 	s.Nil(err)
-	s.Equal(moment, m)
-}
-
-func (s *MomentDBTestSuite) TestFindAllByWorshipID() {
-	moment1, _ := domain.NewMoment(dto.CreateMomentDTO{
-		Title:        "new moment",
-		SectionName:  "inicio",
-		SectionOrder: 1,
-		SongOrder:    1,
-		WorshipID:    "id",
-	})
-
-	moment2, _ := domain.NewMoment(dto.CreateMomentDTO{
-		Title:        "new moment",
-		SectionName:  "inicio",
-		SectionOrder: 1,
-		SongOrder:    1,
-		WorshipID:    "id",
-	})
-
-	err := s.momentDB.Create(moment1)
-	s.Nil(err)
-
-	err = s.momentDB.Create(moment2)
-	s.Nil(err)
-
-	moments, err := s.momentDB.FindAllByWorshipID("id")
-	s.Nil(err)
-	s.NotNil(moments)
+	s.Equal(1, m.SongOrder)
 }
 
 func (s *MomentDBTestSuite) TestUpdate() {
 	moment, _ := domain.NewMoment(dto.CreateMomentDTO{
-		Title:        "new moment",
-		SectionName:  "inicio",
-		SectionOrder: 1,
-		SongOrder:    1,
-		WorshipID:    "id",
+		Title:     "new moment",
+		SectionID: "id",
 	})
 
 	err := s.momentDB.Create(moment)
 	s.Nil(err)
 
 	moment.Title = "new title"
+	moment.SongID = "song id"
 
 	err = s.momentDB.Update(moment)
 	s.Nil(err)
@@ -112,31 +76,23 @@ func (s *MomentDBTestSuite) TestUpdate() {
 	m, err := s.momentDB.FindByID(moment.ID)
 	s.Nil(err)
 	s.Equal("new title", m.Title)
+	s.Equal("song id", m.SongID)
 }
 
 func (s *MomentDBTestSuite) TestUpdateOrder() {
 	moment, _ := domain.NewMoment(dto.CreateMomentDTO{
-		Title:        "new moment",
-		SectionName:  "inicio",
-		SectionOrder: 1,
-		SongOrder:    1,
-		WorshipID:    "test",
+		Title:     "new moment",
+		SectionID: "test",
 	})
 
 	moment2, _ := domain.NewMoment(dto.CreateMomentDTO{
-		Title:        "new moment",
-		SectionName:  "inicio",
-		SectionOrder: 1,
-		SongOrder:    2,
-		WorshipID:    "test",
+		Title:     "new moment 2",
+		SectionID: "test",
 	})
 
 	moment3, _ := domain.NewMoment(dto.CreateMomentDTO{
-		Title:        "new moment",
-		SectionName:  "inicio",
-		SectionOrder: 1,
-		SongOrder:    3,
-		WorshipID:    "test",
+		Title:     "new moment 3",
+		SectionID: "test",
 	})
 
 	err := s.momentDB.Create(moment)
@@ -166,18 +122,26 @@ func (s *MomentDBTestSuite) TestUpdateOrder() {
 	err = s.momentDB.UpdateOrder(&dtos)
 	s.Nil(err)
 
-	m, err := s.momentDB.FindAllByWorshipID("test")
+	m, err := s.momentDB.FindByID(moment.ID)
 	s.Nil(err)
-	s.NotNil(m)
+	s.Equal("new moment", m.Title)
+	s.Equal(2, m.SongOrder)
+
+	m, err = s.momentDB.FindByID(moment2.ID)
+	s.Nil(err)
+	s.Equal("new moment 2", m.Title)
+	s.Equal(3, m.SongOrder)
+
+	m, err = s.momentDB.FindByID(moment3.ID)
+	s.Nil(err)
+	s.Equal("new moment 3", m.Title)
+	s.Equal(1, m.SongOrder)
 }
 
 func (s *MomentDBTestSuite) TestDelete() {
 	moment, _ := domain.NewMoment(dto.CreateMomentDTO{
-		Title:        "new moment",
-		SectionName:  "inicio",
-		SectionOrder: 1,
-		SongOrder:    1,
-		WorshipID:    "id",
+		Title:     "new moment",
+		SectionID: "test",
 	})
 
 	err := s.momentDB.Create(moment)

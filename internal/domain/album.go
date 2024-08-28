@@ -8,9 +8,10 @@ import (
 )
 
 type Album struct {
-	ID       string `json:"id"`
-	Title    string `json:"title"`
-	ImageUrl string `json:"image_url"`
+	ID         string `json:"id"`
+	Title      string `json:"title"`
+	ImageUrl   string `json:"image_url"`
+	AlbumOrder int    `json:"album_order"`
 }
 
 func NewAlbum(dto dto.CreateAlbumDTO) (*Album, error) {

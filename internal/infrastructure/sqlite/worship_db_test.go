@@ -24,7 +24,7 @@ func (s *WorshipDBTestSuite) SetupSuite() {
 	s.Nil(err)
 	s.db = db
 
-	db.Exec("CREATE table worships (id varchar(255), title varchar(255), image_url varchar(255))")
+	db.Exec("CREATE table worships (id varchar(255), title varchar(255), image_url varchar(255), worship_order int)")
 	s.worshipDB = sqlite.NewWorshipDB(db)
 }
 

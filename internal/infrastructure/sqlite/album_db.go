@@ -3,6 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
+	"log"
 
 	"github.com/ViniNepo/church-player-backend/internal/domain"
 )
@@ -22,13 +23,26 @@ func (a *AlbumDB) Create(album *domain.Album) error {
 		return errors.New("album is nil")
 	}
 
-	stmt, err := a.DB.Prepare("INSERT INTO albums (id, title, image_url) VALUES (?, ?, ?)")
+	var maxOrder *int
+	err := a.DB.QueryRow("SELECT MAX(album_order) FROM albums").Scan(&maxOrder)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var newOrder int
+	if maxOrder != nil {
+		newOrder = *maxOrder + 1
+	} else {
+		newOrder = 1
+	}
+
+	stmt, err := a.DB.Prepare("INSERT INTO albums (id, title, image_url, album_order) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		return err
 	}
 
 	defer stmt.Close()
-	_, err = stmt.Exec(album.ID, album.Title, album.ImageUrl)
+	_, err = stmt.Exec(album.ID, album.Title, album.ImageUrl, newOrder)
 	if err != nil {
 		return err
 	}
@@ -48,7 +62,7 @@ func (a *AlbumDB) FindByID(id string) (*domain.Album, error) {
 	}
 	defer stmt.Close()
 
-	err = stmt.QueryRow(id).Scan(&album.ID, &album.Title, &album.ImageUrl)
+	err = stmt.QueryRow(id).Scan(&album.ID, &album.Title, &album.ImageUrl, &album.AlbumOrder)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +72,7 @@ func (a *AlbumDB) FindByID(id string) (*domain.Album, error) {
 
 func (a *AlbumDB) FindAll() (*[]domain.Album, error) {
 	var albums []domain.Album
-	rows, err := a.DB.Query("SELECT * FROM albums")
+	rows, err := a.DB.Query("SELECT * FROM albums ORDER BY album_order ASC")
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +80,7 @@ func (a *AlbumDB) FindAll() (*[]domain.Album, error) {
 
 	for rows.Next() {
 		var album domain.Album
-		err = rows.Scan(&album.ID, &album.Title, &album.ImageUrl)
+		err = rows.Scan(&album.ID, &album.Title, &album.ImageUrl, &album.AlbumOrder)
 		if err != nil {
 			return nil, err
 		}
@@ -115,6 +129,16 @@ func (a *AlbumDB) Delete(id string) error {
 		return err
 	}
 	defer stmt.Close()
+
+	_, err = stmt.Exec(id)
+	if err != nil {
+		return err
+	}
+
+	stmt, err = a.DB.Prepare("DELETE FROM songs WHERE album_id = ?")
+	if err != nil {
+		return err
+	}
 
 	_, err = stmt.Exec(id)
 	if err != nil {

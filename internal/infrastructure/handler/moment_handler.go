@@ -63,20 +63,21 @@ func (m *MomentHandler) FindByID(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (m *MomentHandler) FindAllByWorshipID(w http.ResponseWriter, r *http.Request) {
+func (m *MomentHandler) FindAllBySectionID(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
+
 	if id == "" {
 		http.Error(w, "id is required", http.StatusBadRequest)
 		return
 	}
 
-	moments, err := m.momentUseCase.FindAllByWorshipID(id)
+	moment, err := m.momentUseCase.FindAllBySectionID(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(moments)
+	err = json.NewEncoder(w).Encode(moment)
 	if err != nil {
 		return
 	}

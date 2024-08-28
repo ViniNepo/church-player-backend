@@ -9,7 +9,7 @@ import (
 type MomentUseCase interface {
 	CreateMoment(moment *domain.Moment) error
 	FindByID(id string) (*domain.Moment, error)
-	FindAllByWorshipID(id string) (*[]domain.Moment, error)
+	FindAllBySectionID(id string) (*[]domain.Moment, error)
 	Update(moment *domain.Moment) error
 	UpdateOrder(momentOrderDTO *[]dto.MomentOrderDTO) error
 	Delete(id string) error
@@ -31,8 +31,8 @@ func (m *momentUseCase) FindByID(id string) (*domain.Moment, error) {
 	return m.momentGateway.FindByID(id)
 }
 
-func (m *momentUseCase) FindAllByWorshipID(id string) (*[]domain.Moment, error) {
-	return m.momentGateway.FindAllByWorshipID(id)
+func (m *momentUseCase) FindAllBySectionID(id string) (*[]domain.Moment, error) {
+	return m.momentGateway.FindAllBySectionID(id)
 }
 
 func (m *momentUseCase) Update(moment *domain.Moment) error {

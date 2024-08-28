@@ -45,6 +45,15 @@ func (u *albumUseCase) FindByID(id string) (*dto.AlbumDTO, error) {
 		Songs:    toSongDTO(songs),
 	}
 
+	if albumDTO.Songs != nil {
+		for _, songDTO := range *albumDTO.Songs {
+			if songDTO.Number != 0 {
+				albumDTO.HasNumber = true
+			}
+		}
+
+	}
+
 	return albumDTO, nil
 }
 

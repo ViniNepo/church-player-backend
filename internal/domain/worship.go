@@ -8,9 +8,10 @@ import (
 )
 
 type Worship struct {
-	ID       string `json:"id"`
-	Title    string `json:"title"`
-	ImageUrl string `json:"image_url"`
+	ID           string `json:"id"`
+	Title        string `json:"title"`
+	ImageUrl     string `json:"image_url"`
+	WorshipOrder int    `json:"worship_order"`
 }
 
 func NewWorship(dto dto.CreateWorshipDTO) (*Worship, error) {

@@ -3,6 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
+	"log"
 
 	"github.com/ViniNepo/church-player-backend/internal/domain"
 )
@@ -22,13 +23,26 @@ func (w *WorshipDB) Create(worship *domain.Worship) error {
 		return errors.New("worship is nil")
 	}
 
-	stmt, err := w.DB.Prepare("INSERT INTO worships (id, title, image_url) VALUES (?, ?, ?)")
+	var maxOrder *int
+	err := w.DB.QueryRow("SELECT MAX(worship_order) FROM worships").Scan(&maxOrder)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var newOrder int
+	if maxOrder != nil {
+		newOrder = *maxOrder + 1
+	} else {
+		newOrder = 1
+	}
+
+	stmt, err := w.DB.Prepare("INSERT INTO worships (id, title, image_url, worship_order) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		return err
 	}
 
 	defer stmt.Close()
-	_, err = stmt.Exec(worship.ID, worship.Title, worship.ImageUrl)
+	_, err = stmt.Exec(worship.ID, worship.Title, worship.ImageUrl, newOrder)
 	if err != nil {
 		return err
 	}
@@ -48,7 +62,7 @@ func (w *WorshipDB) FindByID(id string) (*domain.Worship, error) {
 	}
 	defer stmt.Close()
 
-	err = stmt.QueryRow(id).Scan(&worship.ID, &worship.Title, &worship.ImageUrl)
+	err = stmt.QueryRow(id).Scan(&worship.ID, &worship.Title, &worship.ImageUrl, &worship.WorshipOrder)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +72,7 @@ func (w *WorshipDB) FindByID(id string) (*domain.Worship, error) {
 
 func (w *WorshipDB) FindAll() (*[]domain.Worship, error) {
 	var worships []domain.Worship
-	rows, err := w.DB.Query("SELECT * FROM worships")
+	rows, err := w.DB.Query("SELECT * FROM worships ORDER BY worship_order ASC")
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +80,7 @@ func (w *WorshipDB) FindAll() (*[]domain.Worship, error) {
 
 	for rows.Next() {
 		var worship domain.Worship
-		err = rows.Scan(&worship.ID, &worship.Title, &worship.ImageUrl)
+		err = rows.Scan(&worship.ID, &worship.Title, &worship.ImageUrl, &worship.WorshipOrder)
 		if err != nil {
 			return nil, err
 		}

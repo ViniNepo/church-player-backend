@@ -4,6 +4,7 @@ import (
 	"github.com/ViniNepo/church-player-backend/internal/domain"
 	"github.com/ViniNepo/church-player-backend/internal/domain/dto"
 	"github.com/ViniNepo/church-player-backend/internal/gateway"
+	"github.com/ViniNepo/church-player-backend/internal/infrastructure/sqlite"
 )
 
 type WorshipUseCase interface {
@@ -19,14 +20,16 @@ type worshipUseCase struct {
 	momentGateway  gateway.Moment
 	songGateway    gateway.Song
 	albumGateway   gateway.Album
+	sectionGateway gateway.Section
 }
 
-func NewWorshipUseCase(worshipGateway gateway.Worship, momentGateway gateway.Moment, songGateway gateway.Song, albumGateway gateway.Album) WorshipUseCase {
+func NewWorshipUseCase(worshipGateway gateway.Worship, momentGateway gateway.Moment, songGateway gateway.Song, albumGateway gateway.Album, sectionGateway *sqlite.SectionDB) WorshipUseCase {
 	return &worshipUseCase{
 		worshipGateway: worshipGateway,
 		momentGateway:  momentGateway,
 		songGateway:    songGateway,
 		albumGateway:   albumGateway,
+		sectionGateway: sectionGateway,
 	}
 }
 
@@ -36,68 +39,72 @@ func (w *worshipUseCase) Create(worship *domain.Worship) error {
 
 func (w *worshipUseCase) FindByID(id string) (*dto.WorshipDTO, error) {
 	var worshipDTO dto.WorshipDTO
-	var sections []dto.SectionDTO
+	var sectionsDTO []dto.SectionDTO
 
 	worship, err := w.worshipGateway.FindByID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	moments, err := w.momentGateway.FindAllByWorshipID(worship.ID)
+	sections, err := w.sectionGateway.FindAllByWorshipID(worship.ID)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, section := range *sections {
+		var sectionDTO dto.SectionDTO
+		var momentsDTO []dto.MomentDTO
+
+		moments, err := w.momentGateway.FindAllBySectionID(section.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, moment := range *moments {
+			momentDTO := dto.MomentDTO{}
+
+			if moment.SongID != "" {
+				song, err := w.songGateway.FindByID(moment.SongID)
+				if err != nil {
+					return nil, err
+				}
+
+				album, err := w.albumGateway.FindByID(song.AlbumID)
+				if err != nil {
+					return nil, err
+				}
+
+				songDTO := dto.SongWithAlbumDTO{
+					ID:            song.ID,
+					Title:         song.Title,
+					File:          song.File,
+					Order:         song.Order,
+					AlbumID:       song.AlbumID,
+					AlbumName:     album.Title,
+					AlbumImageURL: album.ImageUrl,
+				}
+
+				momentDTO.Song = &songDTO
+			}
+
+			momentDTO.ID = moment.ID
+			momentDTO.Title = moment.Title
+			momentDTO.SectionID = moment.SectionID
+
+			momentsDTO = append(momentsDTO, momentDTO)
+		}
+
+		sectionDTO.ID = section.ID
+		sectionDTO.Name = section.SectionName
+		sectionDTO.Moments = &momentsDTO
+
+		sectionsDTO = append(sectionsDTO, sectionDTO)
 	}
 
 	worshipDTO.ID = worship.ID
 	worshipDTO.Title = worship.Title
 	worshipDTO.ImageUrl = worship.ImageUrl
-	worshipDTO.Sections = &sections
-
-	sectionMap := make(map[string][]dto.MomentDTO)
-	for _, moment := range *moments {
-		momentDTO := dto.MomentDTO{
-			ID:           moment.ID,
-			Title:        moment.Title,
-			SectionName:  moment.SectionName,
-			SectionOrder: moment.SectionOrder,
-			SongOrder:    moment.SongOrder,
-		}
-
-		if moment.SongID != "" {
-			song, err := w.songGateway.FindByID(moment.SongID)
-			if err != nil {
-				return nil, err
-			}
-
-			album, err := w.albumGateway.FindByID(song.AlbumID)
-			if err != nil {
-				return nil, err
-			}
-
-			songDTO := dto.SongWithAlbumDTO{
-				ID:            song.ID,
-				Title:         song.Title,
-				Number:        song.Number,
-				File:          song.File,
-				Order:         song.Order,
-				AlbumID:       song.AlbumID,
-				AlbumName:     album.Title,
-				AlbumImageURL: album.ImageUrl,
-			}
-
-			momentDTO.Song = &songDTO
-		}
-
-		sectionMap[momentDTO.SectionName] = append(sectionMap[momentDTO.SectionName], momentDTO)
-	}
-
-	for sectionName, ms := range sectionMap {
-		section := dto.SectionDTO{
-			Name:    sectionName,
-			Moments: &ms,
-		}
-		sections = append(sections, section)
-	}
+	worshipDTO.Sections = &sectionsDTO
 
 	return &worshipDTO, nil
 }

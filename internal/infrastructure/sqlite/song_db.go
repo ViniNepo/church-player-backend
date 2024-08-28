@@ -3,6 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
+	"log"
 
 	"github.com/ViniNepo/church-player-backend/internal/domain"
 	"github.com/ViniNepo/church-player-backend/internal/domain/dto"
@@ -23,13 +24,26 @@ func (s *SongDB) Create(song *domain.Song) error {
 		return errors.New("song is nil")
 	}
 
-	stmt, err := s.DB.Prepare("INSERT INTO songs (id, title, number, file, order_song, album_id) VALUES (?, ?, ?, ?, ?, ?)")
+	var maxOrder *int
+	err := s.DB.QueryRow("SELECT MAX(song_order) FROM songs WHERE album_id=?", song.AlbumID).Scan(&maxOrder)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var newOrder int
+	if maxOrder != nil {
+		newOrder = *maxOrder + 1
+	} else {
+		newOrder = 1
+	}
+
+	stmt, err := s.DB.Prepare("INSERT INTO songs (id, title, song_number, file, song_order, album_id) VALUES (?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		return err
 	}
 
 	defer stmt.Close()
-	_, err = stmt.Exec(song.ID, song.Title, song.Number, song.File, song.Order, song.AlbumID)
+	_, err = stmt.Exec(song.ID, song.Title, song.Number, song.File, newOrder, song.AlbumID)
 	if err != nil {
 		return err
 	}
@@ -37,17 +51,17 @@ func (s *SongDB) Create(song *domain.Song) error {
 	return nil
 }
 
-func (s *SongDB) FindAll() (*[]domain.Song, error) {
-	var songs []domain.Song
-	rows, err := s.DB.Query("SELECT * FROM songs")
+func (s *SongDB) FindAll() (*[]dto.SongWithAlbumDTO, error) {
+	var songs []dto.SongWithAlbumDTO
+	rows, err := s.DB.Query("SELECT s.id, s.title, s.song_number, s.file, s.song_order, a.id, a.title, a.image_url FROM songs as s INNER JOIN albums as a ON s.album_id = a.id ORDER BY s.title ASC")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var song domain.Song
-		err := rows.Scan(&song.ID, &song.Title, &song.Number, &song.File, &song.Order, &song.AlbumID)
+		var song dto.SongWithAlbumDTO
+		err := rows.Scan(&song.ID, &song.Title, &song.SongNumber, &song.File, &song.Order, &song.AlbumID, &song.AlbumName, &song.AlbumImageURL)
 		if err != nil {
 			return nil, err
 		}
@@ -60,7 +74,7 @@ func (s *SongDB) FindAll() (*[]domain.Song, error) {
 	}
 
 	if len(songs) == 0 {
-		return &[]domain.Song{}, nil
+		return &[]dto.SongWithAlbumDTO{}, nil
 	}
 
 	return &songs, nil
@@ -68,7 +82,7 @@ func (s *SongDB) FindAll() (*[]domain.Song, error) {
 
 func (s *SongDB) FindAllByAlbumID(id string) (*[]domain.Song, error) {
 	var songs []domain.Song
-	rows, err := s.DB.Query("SELECT * FROM songs WHERE album_id=?", id)
+	rows, err := s.DB.Query("SELECT * FROM songs WHERE album_id=? ORDER BY song_order", id)
 	if err != nil {
 		return nil, err
 	}
@@ -112,13 +126,13 @@ func (s *SongDB) Update(song *domain.Song) error {
 		return errors.New("song is nil")
 	}
 
-	stmt, err := s.DB.Prepare("UPDATE songs SET title=?, number=?, file=?, order_song=?, album_id=? WHERE id=?")
+	stmt, err := s.DB.Prepare("UPDATE songs SET title=?, file=?, song_number=?, song_order=?, album_id=? WHERE id=?")
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(song.Title, song.Number, song.File, song.Order, song.AlbumID, song.ID)
+	_, err = stmt.Exec(song.Title, song.File, song.Number, song.Order, song.AlbumID, song.ID)
 	if err != nil {
 		return err
 	}
@@ -136,7 +150,7 @@ func (s *SongDB) UpdateOrder(songUpdateOrderDTO *[]dto.SongUpdateOrderDTO) error
 		return err
 	}
 
-	stmt, err := tx.Prepare("UPDATE songs SET order_song = ? WHERE id = ?")
+	stmt, err := tx.Prepare("UPDATE songs SET song_order = ? WHERE id = ?")
 	if err != nil {
 		tx.Rollback()
 		return err

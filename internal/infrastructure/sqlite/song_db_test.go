@@ -22,13 +22,16 @@ func (s *SongDBTestSuite) SetupSuite() {
 	s.Nil(err)
 	s.db = db
 
-	db.Exec("CREATE table songs (id varchar(255), title varchar(255), number int, file varchar(255), order_song int, album_id int, FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE)")
+	db.Exec("CREATE table albums (id varchar(255), title varchar(255), image_url varchar(255))")
+	s.albumDB = sqlite.NewAlbumDB(db)
+	db.Exec("CREATE table songs (id varchar(255), title varchar(255), song_number int, file varchar(255), song_order int, album_id int, FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE)")
 	s.songDB = sqlite.NewSongDB(db)
 }
 
 func (s *SongDBTestSuite) TearDownSuite() {
 	defer s.db.Close()
 	s.db.Exec("Drop table songs")
+	s.db.Exec("Drop table albums")
 }
 
 func TestSongDBTestSuite(t *testing.T) {
@@ -38,7 +41,6 @@ func TestSongDBTestSuite(t *testing.T) {
 func (s *SongDBTestSuite) TestCreateSong() {
 	song, _ := domain.NewSong(dto.CreateSongDTO{
 		FileName: "1 - test",
-		Order:    1,
 		AlbumID:  "album_id",
 	})
 
@@ -48,12 +50,10 @@ func (s *SongDBTestSuite) TestCreateSong() {
 	s.Equal("test", song.Title)
 	s.Equal(1, song.Number)
 	s.Equal("1 - test", song.File)
-	s.Equal(1, song.Order)
 	s.Equal("album_id", song.AlbumID)
 
 	song2, _ := domain.NewSong(dto.CreateSongDTO{
 		FileName: "test",
-		Order:    2,
 		AlbumID:  "album_id",
 	})
 
@@ -63,38 +63,65 @@ func (s *SongDBTestSuite) TestCreateSong() {
 	s.Equal("test", song2.Title)
 	s.Equal(0, song2.Number)
 	s.Equal("test", song2.File)
-	s.Equal(2, song2.Order)
 	s.Equal("album_id", song2.AlbumID)
 }
 
 func (s *SongDBTestSuite) TestFindAll() {
+	album, _ := domain.NewAlbum(dto.CreateAlbumDTO{
+		Title:    "title album",
+		ImageUrl: "url",
+	})
+
+	err := s.albumDB.Create(album)
+	s.Nil(err)
+
 	song, _ := domain.NewSong(dto.CreateSongDTO{
 		FileName: "1 - test",
-		Order:    1,
-		AlbumID:  "album_id",
+		AlbumID:  album.ID,
 	})
 
 	song2, _ := domain.NewSong(dto.CreateSongDTO{
 		FileName: "1 - test",
-		Order:    1,
-		AlbumID:  "album_id",
+		AlbumID:  album.ID,
 	})
 
-	err := s.songDB.Create(song)
+	err = s.songDB.Create(song)
 	s.Nil(err)
 
 	err = s.songDB.Create(song2)
 	s.Nil(err)
 
+	songDTOS := []dto.SongWithAlbumDTO{
+		{
+			ID:            song.ID,
+			Title:         song.Title,
+			File:          song.File,
+			SongNumber:    song.Number,
+			Order:         1,
+			AlbumID:       album.ID,
+			AlbumName:     album.Title,
+			AlbumImageURL: album.ImageUrl,
+		},
+		{
+			ID:            song2.ID,
+			Title:         song2.Title,
+			File:          song2.File,
+			SongNumber:    song2.Number,
+			Order:         2,
+			AlbumID:       album.ID,
+			AlbumName:     album.Title,
+			AlbumImageURL: album.ImageUrl,
+		},
+	}
+
 	sg, err := s.songDB.FindAll()
 	s.Nil(err)
-	s.NotNil(sg)
+	s.Equal(&songDTOS, sg)
 }
 
 func (s *SongDBTestSuite) TestUpdate() {
 	song, _ := domain.NewSong(dto.CreateSongDTO{
 		FileName: "1 - test",
-		Order:    1,
 		AlbumID:  "album test",
 	})
 
@@ -115,19 +142,16 @@ func (s *SongDBTestSuite) TestUpdate() {
 func (s *SongDBTestSuite) TestUpdateOrder() {
 	song, _ := domain.NewSong(dto.CreateSongDTO{
 		FileName: "1 - test",
-		Order:    1,
 		AlbumID:  "album test",
 	})
 
 	song2, _ := domain.NewSong(dto.CreateSongDTO{
 		FileName: "1 - test",
-		Order:    2,
 		AlbumID:  "album test",
 	})
 
 	song3, _ := domain.NewSong(dto.CreateSongDTO{
 		FileName: "1 - test",
-		Order:    3,
 		AlbumID:  "album test",
 	})
 
@@ -175,7 +199,6 @@ func (s *SongDBTestSuite) TestUpdateOrder() {
 func (s *SongDBTestSuite) TestDelete() {
 	song, _ := domain.NewSong(dto.CreateSongDTO{
 		FileName: "1 - test",
-		Order:    1,
 		AlbumID:  "album test",
 	})
 

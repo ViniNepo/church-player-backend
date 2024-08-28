@@ -13,14 +13,14 @@ import (
 type Song struct {
 	ID      string `json:"id"`
 	Title   string `json:"title"`
-	Number  int    `json:"number"`
+	Number  int    `json:"song_number"`
 	File    string `json:"file"`
-	Order   int    `json:"order_song"`
+	Order   int    `json:"song_order"`
 	AlbumID string `json:"album_id"`
 }
 
 func NewSong(dto dto.CreateSongDTO) (*Song, error) {
-	if dto.FileName == "" || dto.Order == 0 || dto.AlbumID == "" {
+	if dto.FileName == "" || dto.AlbumID == "" {
 		return nil, errors.New("file name, file path and order cannot be empty")
 	}
 
@@ -42,7 +42,6 @@ func NewSong(dto dto.CreateSongDTO) (*Song, error) {
 		Title:   song.Title,
 		Number:  song.Number,
 		File:    dto.FileName,
-		Order:   dto.Order,
 		AlbumID: dto.AlbumID,
 	}, nil
 }

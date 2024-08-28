@@ -24,13 +24,16 @@ func (s *AlbumDBTestSuite) SetupSuite() {
 	s.Nil(err)
 	s.db = db
 
-	db.Exec("CREATE table albums (id varchar(255), title varchar(255), image_url varchar(255))")
+	db.Exec("CREATE table albums (id varchar(255), title varchar(255), image_url varchar(255), album_order int)")
 	s.albumDB = sqlite.NewAlbumDB(db)
+	db.Exec("CREATE table songs (id varchar(255), title varchar(255), song_number int, file varchar(255), song_order int, album_id int, FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE)")
+	s.songDB = sqlite.NewSongDB(db)
 }
 
 func (s *AlbumDBTestSuite) TearDownSuite() {
 	defer s.db.Close()
 	s.db.Exec("Drop table albums")
+	s.db.Exec("Drop table songs")
 }
 
 func TestAlbumDBTestSuite(t *testing.T) {
@@ -140,12 +143,24 @@ func (s *AlbumDBTestSuite) TestDeleteAlbumById() {
 		ImageUrl: "",
 	})
 
+	song, _ := domain.NewSong(dto.CreateSongDTO{
+		FileName: "1 - test",
+		AlbumID:  album.ID,
+	})
+
 	err := s.albumDB.Create(album)
 	s.Nil(err)
+
+	err = s.songDB.Create(song)
+	s.Nil(err)
+	s.NotNil(song.ID)
 
 	err = s.albumDB.Delete(album.ID)
 	s.Nil(err)
 
 	_, err = s.albumDB.FindByID(album.ID)
+	s.NotNil(err)
+
+	_, err = s.songDB.FindByID(song.ID)
 	s.NotNil(err)
 }

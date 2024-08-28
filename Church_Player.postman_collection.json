@@ -143,7 +143,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"file_name\": \"2 - song name\",\n    \"order_song\": 2,\n    \"album_id\": \"3f4a95d0-b7df-490d-908c-f176c251d41d\"\n}",
+							"raw": "{\n    \"file_name\": \"2 - song name\",\n    \"song_order\": 2,\n    \"album_id\": \"3f4a95d0-b7df-490d-908c-f176c251d41d\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -213,7 +213,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"id\": \"8b5697a2-aeb9-4e33-9391-48e4dd6bb018\",\n    \"title\": \"song name\",\n    \"number\": 0,\n    \"file\": \"song name\",\n    \"order_song\": 1,\n    \"album_id\": \"3f4a95d0-b7df-490d-908c-f176c251d41d\"\n}",
+							"raw": "{\n    \"id\": \"8b5697a2-aeb9-4e33-9391-48e4dd6bb018\",\n    \"title\": \"song name\",\n    \"number\": 0,\n    \"file\": \"song name\",\n    \"song_order\": 1,\n    \"album_id\": \"3f4a95d0-b7df-490d-908c-f176c251d41d\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -240,7 +240,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "[\n    {\n        \"id\": \"8b5697a2-aeb9-4e33-9391-48e4dd6bb018\",\n        \"order_song\": 10\n    },\n    {\n        \"id\": \"a79deb5c-ce30-4c84-ba40-1c2c9f267f2b\",\n        \"order_song\": 9\n    }\n]",
+							"raw": "[\n    {\n        \"id\": \"8b5697a2-aeb9-4e33-9391-48e4dd6bb018\",\n        \"song_order\": 10\n    },\n    {\n        \"id\": \"a79deb5c-ce30-4c84-ba40-1c2c9f267f2b\",\n        \"song_order\": 9\n    }\n]",
 							"options": {
 								"raw": {
 									"language": "json"

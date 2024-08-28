@@ -33,18 +33,21 @@ func main() {
 	albumDB := sqlite.NewAlbumDB(db)
 	songDB := sqlite.NewSongDB(db)
 	momentDB := sqlite.NewMomentDB(db)
+	sectionDB := sqlite.NewSectionDB(db)
 	worshipDB := sqlite.NewWorshipDB(db)
 
 	// Configurar os casos de uso
 	albumUseCase := usecase.NewAlbumUseCase(albumDB, songDB)
 	songUseCase := usecase.NewSongUseCase(songDB)
 	momentUseCase := usecase.NewMomentUseCase(momentDB)
-	worshipUseCase := usecase.NewWorshipUseCase(worshipDB, momentDB, songDB, albumDB)
+	sectionUseCase := usecase.NewSectionUseCase(sectionDB)
+	worshipUseCase := usecase.NewWorshipUseCase(worshipDB, momentDB, songDB, albumDB, sectionDB)
 
 	// Iniciar handlers
 	albumHandler := handler.NewAlbumHandler(albumUseCase)
 	songHandler := handler.NewSongHandler(songUseCase)
 	momentHandler := handler.NewMomentHandler(momentUseCase)
+	sectionHandler := handler.NewSectionHandler(sectionUseCase)
 	worshipHandler := handler.NewWorshipHandler(worshipUseCase)
 
 	//rotas
@@ -63,10 +66,15 @@ func main() {
 
 	router.HandleFunc("/moments", momentHandler.Create).Methods("POST")
 	router.HandleFunc("/moments/{id}", momentHandler.FindByID).Methods("GET")
-	router.HandleFunc("/moments/worship/{id}", momentHandler.FindAllByWorshipID).Methods("GET")
+	router.HandleFunc("/moments/{id}/all", momentHandler.FindAllBySectionID).Methods("GET")
 	router.HandleFunc("/moments", momentHandler.Update).Methods("PATCH")
 	router.HandleFunc("/moments/orders", momentHandler.UpdateOrder).Methods("PATCH")
 	router.HandleFunc("/moments/{id}", momentHandler.Delete).Methods("DELETE")
+
+	router.HandleFunc("/sections", sectionHandler.Create).Methods("POST")
+	router.HandleFunc("/sections/{id}", sectionHandler.FindAllByWorshipID).Methods("GET")
+	router.HandleFunc("/sections", sectionHandler.Update).Methods("PATCH")
+	router.HandleFunc("/sections/{id}", sectionHandler.Delete).Methods("DELETE")
 
 	router.HandleFunc("/worships", worshipHandler.Create).Methods("POST")
 	router.HandleFunc("/worships", worshipHandler.FindAll).Methods("GET")

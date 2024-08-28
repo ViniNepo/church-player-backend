@@ -7,7 +7,7 @@ import (
 
 type Song interface {
 	Create(song *domain.Song) error
-	FindAll() (*[]domain.Song, error)
+	FindAll() (*[]dto.SongWithAlbumDTO, error)
 	FindAllByAlbumID(id string) (*[]domain.Song, error)
 	FindByID(id string) (*domain.Song, error)
 	Update(song *domain.Song) error

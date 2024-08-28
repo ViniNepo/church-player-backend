@@ -7,9 +7,10 @@ type (
 	}
 
 	AlbumDTO struct {
-		ID       string     `json:"id"`
-		Title    string     `json:"title"`
-		ImageUrl string     `json:"image_url"`
-		Songs    *[]SongDTO `json:"songs"`
+		ID        string     `json:"id"`
+		Title     string     `json:"title"`
+		ImageUrl  string     `json:"image_url"`
+		HasNumber bool       `json:"has_numbered_songs"`
+		Songs     *[]SongDTO `json:"songs"`
 	}
 )

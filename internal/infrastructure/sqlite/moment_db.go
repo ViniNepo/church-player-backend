@@ -3,6 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
+	"log"
 
 	"github.com/ViniNepo/church-player-backend/internal/domain"
 	"github.com/ViniNepo/church-player-backend/internal/domain/dto"
@@ -23,13 +24,26 @@ func (m *MomentDB) Create(moment *domain.Moment) error {
 		return errors.New("moment is nil")
 	}
 
-	stmt, err := m.DB.Prepare("INSERT INTO moments (id, title, section_name, section_order, song_order, song_id, worship_id) VALUES (?, ?, ?, ?, ?, ?, ?)")
+	var maxOrder *int
+	err := m.DB.QueryRow("SELECT MAX(song_order) FROM moments WHERE section_id=?", moment.SectionID).Scan(&maxOrder)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var newOrder int
+	if maxOrder != nil {
+		newOrder = *maxOrder + 1
+	} else {
+		newOrder = 1
+	}
+
+	stmt, err := m.DB.Prepare("INSERT INTO moments (id, title, song_order, song_id, section_id) VALUES (?, ?, ?, ?, ?)")
 	if err != nil {
 		return err
 	}
 
 	defer stmt.Close()
-	_, err = stmt.Exec(moment.ID, moment.Title, moment.SectionName, moment.SectionOrder, moment.SongOrder, moment.SongID, moment.WorshipID)
+	_, err = stmt.Exec(moment.ID, moment.Title, newOrder, moment.SongID, moment.SectionID)
 	if err != nil {
 		return err
 	}
@@ -48,7 +62,7 @@ func (m *MomentDB) FindByID(id string) (*domain.Moment, error) {
 	}
 	defer stmt.Close()
 
-	err = stmt.QueryRow(id).Scan(&moment.ID, &moment.Title, &moment.SectionName, &moment.SectionOrder, &moment.SongOrder, &moment.SongID, &moment.WorshipID)
+	err = stmt.QueryRow(id).Scan(&moment.ID, &moment.Title, &moment.SongOrder, &moment.SongID, &moment.SectionID)
 	if err != nil {
 		return nil, err
 	}
@@ -56,13 +70,9 @@ func (m *MomentDB) FindByID(id string) (*domain.Moment, error) {
 	return &moment, nil
 }
 
-func (m *MomentDB) FindAllByWorshipID(id string) (*[]domain.Moment, error) {
-	if id == "" {
-		return nil, errors.New("worship id is empty")
-	}
-
+func (m *MomentDB) FindAllBySectionID(id string) (*[]domain.Moment, error) {
 	var moments []domain.Moment
-	rows, err := m.DB.Query("SELECT * FROM moments WHERE worship_id = ? ORDER BY song_order", id)
+	rows, err := m.DB.Query("SELECT * FROM moments WHERE section_id=? ORDER BY song_order", id)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +80,7 @@ func (m *MomentDB) FindAllByWorshipID(id string) (*[]domain.Moment, error) {
 
 	for rows.Next() {
 		var moment domain.Moment
-		err = rows.Scan(&moment.ID, &moment.Title, &moment.SectionName, &moment.SectionOrder, &moment.SongOrder, &moment.SongID, &moment.WorshipID)
+		err := rows.Scan(&moment.ID, &moment.Title, &moment.SongOrder, &moment.SongID, &moment.SectionID)
 		if err != nil {
 			return nil, err
 		}
@@ -78,13 +88,8 @@ func (m *MomentDB) FindAllByWorshipID(id string) (*[]domain.Moment, error) {
 		moments = append(moments, moment)
 	}
 	err = rows.Err()
-
 	if err != nil {
 		return nil, err
-	}
-
-	if len(moments) == 0 {
-		return &[]domain.Moment{}, nil
 	}
 
 	return &moments, nil
@@ -95,13 +100,13 @@ func (m *MomentDB) Update(moment *domain.Moment) error {
 		return errors.New("album is nil")
 	}
 
-	stmt, err := m.DB.Prepare("UPDATE moments SET title=?, section_name=?, song_id=? WHERE id=?")
+	stmt, err := m.DB.Prepare("UPDATE moments SET title=?, song_id=? WHERE id=?")
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(moment.Title, moment.SectionName, moment.SongID, moment.ID)
+	_, err = stmt.Exec(moment.Title, moment.SongID, moment.ID)
 	if err != nil {
 		return err
 	}
@@ -119,7 +124,7 @@ func (m *MomentDB) UpdateOrder(momentOrderDTO *[]dto.MomentOrderDTO) error {
 		return err
 	}
 
-	stmt, err := tx.Prepare("UPDATE moments SET song_order = ? WHERE id = ?")
+	stmt, err := tx.Prepare("UPDATE moments SET song_order = ?, section_id=? WHERE id = ?")
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -127,7 +132,7 @@ func (m *MomentDB) UpdateOrder(momentOrderDTO *[]dto.MomentOrderDTO) error {
 	defer stmt.Close()
 
 	for _, update := range *momentOrderDTO {
-		_, err := stmt.Exec(update.SongOrder, update.ID)
+		_, err := stmt.Exec(update.SongOrder, update.SectionID, update.ID)
 		if err != nil {
 			tx.Rollback()
 			return err
