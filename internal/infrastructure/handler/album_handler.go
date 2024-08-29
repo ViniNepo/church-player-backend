@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 
 	"github.com/ViniNepo/church-player-backend/internal/domain"
 	"github.com/ViniNepo/church-player-backend/internal/domain/dto"
@@ -77,19 +78,47 @@ func (h *AlbumHandler) FindAll(w http.ResponseWriter, r *http.Request) {
 func (h *AlbumHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var album domain.Album
 
-	err := json.NewDecoder(r.Body).Decode(&album)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	// Verifica se o campo do álbum foi enviado
+	albumData := r.FormValue("album")
+	if albumData != "" {
+		err := json.Unmarshal([]byte(albumData), &album)
+		if err != nil {
+			http.Error(w, "Invalid album data", http.StatusBadRequest)
+			return
+		}
+	}
+
+	// Tenta analisar o formulário multipart (pode conter arquivos)
+	err := r.ParseMultipartForm(100 << 20) // 100 MB
+	if err != nil && err != http.ErrNotMultipart {
+		http.Error(w, "Could not parse multipart form", http.StatusBadRequest)
 		return
 	}
 
-	err = h.albumUseCase.Update(&album)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
-		return
+	destDir := "./images"
+	os.MkdirAll(destDir, os.ModePerm)
+
+	// Processa os arquivos, se houver
+	files := r.MultipartForm.File["files"]
+	if len(files) > 0 {
+		for _, fileHeader := range files {
+			err = h.albumUseCase.Update(&album, fileHeader)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+				return
+			}
+		}
+	} else {
+		// Se não houver arquivos, apenas atualiza o álbum sem arquivo
+		err = h.albumUseCase.Update(&album, nil)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+			return
+		}
 	}
 
-	json.NewEncoder(w)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(album)
 }
 
 func (h *AlbumHandler) Delete(w http.ResponseWriter, r *http.Request) {

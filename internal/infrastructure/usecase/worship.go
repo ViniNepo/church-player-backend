@@ -1,8 +1,13 @@
 package usecase
 
 import (
+	"errors"
+	"mime/multipart"
+	"path/filepath"
+
 	"github.com/ViniNepo/church-player-backend/internal/domain"
 	"github.com/ViniNepo/church-player-backend/internal/domain/dto"
+	"github.com/ViniNepo/church-player-backend/internal/filemanager"
 	"github.com/ViniNepo/church-player-backend/internal/gateway"
 	"github.com/ViniNepo/church-player-backend/internal/infrastructure/sqlite"
 )
@@ -11,7 +16,7 @@ type WorshipUseCase interface {
 	Create(album *domain.Worship) error
 	FindByID(id string) (*dto.WorshipDTO, error)
 	FindAll() (*[]domain.Worship, error)
-	Update(album *domain.Worship) error
+	Update(album *domain.Worship, fileHeader *multipart.FileHeader) error
 	Delete(id string) error
 }
 
@@ -21,15 +26,17 @@ type worshipUseCase struct {
 	songGateway    gateway.Song
 	albumGateway   gateway.Album
 	sectionGateway gateway.Section
+	fileManager    filemanager.FileManager
 }
 
-func NewWorshipUseCase(worshipGateway gateway.Worship, momentGateway gateway.Moment, songGateway gateway.Song, albumGateway gateway.Album, sectionGateway *sqlite.SectionDB) WorshipUseCase {
+func NewWorshipUseCase(worshipGateway gateway.Worship, momentGateway gateway.Moment, songGateway gateway.Song, albumGateway gateway.Album, sectionGateway *sqlite.SectionDB, manager filemanager.FileManager) WorshipUseCase {
 	return &worshipUseCase{
 		worshipGateway: worshipGateway,
 		momentGateway:  momentGateway,
 		songGateway:    songGateway,
 		albumGateway:   albumGateway,
 		sectionGateway: sectionGateway,
+		fileManager:    manager,
 	}
 }
 
@@ -113,11 +120,35 @@ func (w *worshipUseCase) FindAll() (*[]domain.Worship, error) {
 	return w.worshipGateway.FindAll()
 }
 
-func (w *worshipUseCase) Update(album *domain.Worship) error {
-	return w.worshipGateway.Update(album)
+func (w *worshipUseCase) Update(worship *domain.Worship, fileHeader *multipart.FileHeader) error {
+	if fileHeader != nil {
+		destinationPath := filepath.Join("./images", worship.ImageUrl)
+		if worship.ImageUrl != "church-player-2.png" && w.fileManager.Exists(destinationPath) {
+			return errors.New("image exists")
+		}
+
+		err := w.fileManager.Copy(fileHeader, "./images")
+		if err != nil {
+			return err
+		}
+	}
+
+	return w.worshipGateway.Update(worship)
 }
 
 func (w *worshipUseCase) Delete(id string) error {
+	worship, err := w.worshipGateway.FindByID(id)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		if worship.ImageUrl != "church-player-2.png" {
+			destinationPath := filepath.Join("./images", worship.ImageUrl)
+			_ = w.fileManager.Delete(destinationPath)
+		}
+	}()
+
 	sections, err := w.sectionGateway.FindAllByWorshipID(id)
 	if err != nil {
 		return err

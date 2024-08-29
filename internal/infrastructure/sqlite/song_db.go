@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"mime/multipart"
 
 	"github.com/ViniNepo/church-player-backend/internal/domain"
 	"github.com/ViniNepo/church-player-backend/internal/domain/dto"
@@ -19,7 +20,7 @@ func NewSongDB(db *sql.DB) *SongDB {
 	}
 }
 
-func (s *SongDB) Create(song *domain.Song) error {
+func (s *SongDB) Create(song *domain.Song, fileHeader *multipart.FileHeader) error {
 	if song == nil {
 		return errors.New("song is nil")
 	}

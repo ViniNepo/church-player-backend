@@ -1,6 +1,10 @@
 package usecase
 
 import (
+	"errors"
+	"mime/multipart"
+	"path/filepath"
+
 	"github.com/ViniNepo/church-player-backend/internal/domain"
 	"github.com/ViniNepo/church-player-backend/internal/domain/dto"
 	"github.com/ViniNepo/church-player-backend/internal/filemanager"
@@ -11,7 +15,7 @@ type AlbumUseCase interface {
 	CreateAlbum(album *domain.Album) error
 	FindByID(id string) (*dto.AlbumDTO, error)
 	FindAll() (*[]domain.Album, error)
-	Update(album *domain.Album) error
+	Update(album *domain.Album, fileHeader *multipart.FileHeader) error
 	Delete(id string) error
 }
 
@@ -63,7 +67,19 @@ func (u *albumUseCase) FindAll() (*[]domain.Album, error) {
 	return u.albumGateway.FindAll()
 }
 
-func (u *albumUseCase) Update(album *domain.Album) error {
+func (u *albumUseCase) Update(album *domain.Album, fileHeader *multipart.FileHeader) error {
+	if fileHeader != nil {
+		destinationPath := filepath.Join("./images", album.ImageUrl)
+		if album.ImageUrl != "church-player-2.png" && u.fileManager.Exists(destinationPath) {
+			return errors.New("image exists")
+		}
+
+		err := u.fileManager.Copy(fileHeader, "./images")
+		if err != nil {
+			return err
+		}
+	}
+
 	return u.albumGateway.Update(album)
 }
 
@@ -73,9 +89,20 @@ func (u *albumUseCase) Delete(id string) error {
 		return err
 	}
 
+	album, err := u.albumGateway.FindByID(id)
+	if err != nil {
+		return err
+	}
+
 	go func() {
+		if album.ImageUrl != "church-player-2.png" {
+			destinationPath := filepath.Join("./images", album.ImageUrl)
+			_ = u.fileManager.Delete(destinationPath)
+		}
+
 		for _, song := range *songs {
-			_ = u.fileManager.Delete(song.File)
+			destinationPath := filepath.Join("./files", song.File)
+			_ = u.fileManager.Delete(destinationPath)
 		}
 	}()
 

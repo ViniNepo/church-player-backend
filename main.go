@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -44,7 +45,7 @@ func main() {
 	songUseCase := usecase.NewSongUseCase(songDB, fileManager)
 	momentUseCase := usecase.NewMomentUseCase(momentDB)
 	sectionUseCase := usecase.NewSectionUseCase(sectionDB)
-	worshipUseCase := usecase.NewWorshipUseCase(worshipDB, momentDB, songDB, albumDB, sectionDB)
+	worshipUseCase := usecase.NewWorshipUseCase(worshipDB, momentDB, songDB, albumDB, sectionDB, fileManager)
 	fileControlUseCase := usecase.NewFileControlUseCase(fileManager)
 
 	// Iniciar handlers
@@ -56,6 +57,8 @@ func main() {
 	fileControl := handler.NewFileControlHandler(fileControlUseCase)
 
 	//rotas
+	router.HandleFunc("/ping", pong).Methods("GET")
+
 	router.HandleFunc("/file-control/{path}", fileControl.Play).Methods("GET")
 
 	router.HandleFunc("/albums", albumHandler.Create).Methods("POST")
@@ -64,7 +67,7 @@ func main() {
 	router.HandleFunc("/albums", albumHandler.Update).Methods("PATCH")
 	router.HandleFunc("/albums/{id}", albumHandler.Delete).Methods("DELETE")
 
-	router.HandleFunc("/songs", songHandler.Create).Methods("POST")
+	router.HandleFunc("/songs/{album_id}", songHandler.Create).Methods("POST")
 	router.HandleFunc("/songs", songHandler.FindAll).Methods("GET")
 	router.HandleFunc("/songs/{id}", songHandler.FindById).Methods("GET")
 	router.HandleFunc("/songs", songHandler.Update).Methods("PATCH")
@@ -104,4 +107,11 @@ func main() {
 		return
 	}
 	log.Println("Server started on port", cfg.ServerPort)
+}
+
+func pong(w http.ResponseWriter, r *http.Request) {
+	err := json.NewEncoder(w).Encode("pong")
+	if err != nil {
+		return
+	}
 }

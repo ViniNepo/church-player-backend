@@ -151,7 +151,7 @@ func (s *AlbumDBTestSuite) TestDeleteAlbumById() {
 	err := s.albumDB.Create(album)
 	s.Nil(err)
 
-	err = s.songDB.Create(song)
+	err = s.songDB.Create(song, nil)
 	s.Nil(err)
 	s.NotNil(song.ID)
 

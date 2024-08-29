@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 
 	"github.com/ViniNepo/church-player-backend/internal/domain"
 	"github.com/ViniNepo/church-player-backend/internal/domain/dto"
@@ -21,22 +22,33 @@ func NewSongHandler(useCase usecase.SongUseCase) *SongHandler {
 }
 
 func (h *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var songDTO []dto.CreateSongDTO
+	id := mux.Vars(r)["album_id"]
 
-	err := json.NewDecoder(r.Body).Decode(&songDTO)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if id == "" {
+		http.Error(w, "album_id is required", http.StatusBadRequest)
 		return
 	}
 
-	for _, s := range songDTO {
-		song, err := domain.NewSong(s)
+	err := r.ParseMultipartForm(100 << 20) // 10 MB
+	if err != nil {
+		http.Error(w, "Could not parse multipart form", http.StatusBadRequest)
+		return
+	}
+
+	destDir := "./files"
+	os.MkdirAll(destDir, os.ModePerm)
+
+	files := r.MultipartForm.File["files"]
+	for _, fileHeader := range files {
+		song, err := domain.NewSong(dto.CreateSongDTO{
+			FileName: fileHeader.Filename,
+			AlbumID:  id,
+		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
 		}
 
-		err = h.songUseCase.Create(song)
+		err = h.songUseCase.Create(song, fileHeader)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 			return

@@ -44,7 +44,7 @@ func (s *SongDBTestSuite) TestCreateSong() {
 		AlbumID:  "album_id",
 	})
 
-	err := s.songDB.Create(song)
+	err := s.songDB.Create(song, nil)
 	s.Nil(err)
 	s.NotNil(song.ID)
 	s.Equal("test", song.Title)
@@ -57,7 +57,7 @@ func (s *SongDBTestSuite) TestCreateSong() {
 		AlbumID:  "album_id",
 	})
 
-	err = s.songDB.Create(song2)
+	err = s.songDB.Create(song2, nil)
 	s.Nil(err)
 	s.NotNil(song.ID)
 	s.Equal("test", song2.Title)
@@ -85,10 +85,10 @@ func (s *SongDBTestSuite) TestFindAll() {
 		AlbumID:  album.ID,
 	})
 
-	err = s.songDB.Create(song)
+	err = s.songDB.Create(song, nil)
 	s.Nil(err)
 
-	err = s.songDB.Create(song2)
+	err = s.songDB.Create(song2, nil)
 	s.Nil(err)
 
 	songDTOS := []dto.SongWithAlbumDTO{
@@ -125,7 +125,7 @@ func (s *SongDBTestSuite) TestUpdate() {
 		AlbumID:  "album test",
 	})
 
-	err := s.songDB.Create(song)
+	err := s.songDB.Create(song, nil)
 	s.Nil(err)
 
 	song.Title = "new title"
@@ -155,13 +155,13 @@ func (s *SongDBTestSuite) TestUpdateOrder() {
 		AlbumID:  "album test",
 	})
 
-	err := s.songDB.Create(song)
+	err := s.songDB.Create(song, nil)
 	s.Nil(err)
 
-	err = s.songDB.Create(song2)
+	err = s.songDB.Create(song2, nil)
 	s.Nil(err)
 
-	err = s.songDB.Create(song3)
+	err = s.songDB.Create(song3, nil)
 	s.Nil(err)
 
 	dtos := []dto.SongUpdateOrderDTO{
@@ -202,7 +202,7 @@ func (s *SongDBTestSuite) TestDelete() {
 		AlbumID:  "album test",
 	})
 
-	err := s.songDB.Create(song)
+	err := s.songDB.Create(song, nil)
 	s.Nil(err)
 
 	err = s.songDB.Delete(song.ID)

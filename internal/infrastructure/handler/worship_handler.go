@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 
 	"github.com/ViniNepo/church-player-backend/internal/domain"
 	"github.com/ViniNepo/church-player-backend/internal/domain/dto"
@@ -81,15 +82,43 @@ func (h *WorshipHandler) FindAll(w http.ResponseWriter, r *http.Request) {
 func (h *WorshipHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var worship domain.Worship
 
-	err := json.NewDecoder(r.Body).Decode(&worship)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	// Verifica se o campo do álbum foi enviado
+	albumData := r.FormValue("worship")
+	if albumData != "" {
+		err := json.Unmarshal([]byte(albumData), &worship)
+		if err != nil {
+			http.Error(w, "Invalid worship data", http.StatusBadRequest)
+			return
+		}
+	}
+
+	// Tenta analisar o formulário multipart (pode conter arquivos)
+	err := r.ParseMultipartForm(100 << 20) // 100 MB
+	if err != nil && err != http.ErrNotMultipart {
+		http.Error(w, "Could not parse multipart form", http.StatusBadRequest)
 		return
 	}
 
-	err = h.worshipUseCase.Update(&worship)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+	destDir := "./images"
+	os.MkdirAll(destDir, os.ModePerm)
+
+	// Processa os arquivos, se houver
+	files := r.MultipartForm.File["files"]
+	if len(files) > 0 {
+		for _, fileHeader := range files {
+			err = h.worshipUseCase.Update(&worship, fileHeader)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+				return
+			}
+		}
+	} else {
+		// Se não houver arquivos, apenas atualiza o worship sem arquivo
+		err = h.worshipUseCase.Update(&worship, nil)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+			return
+		}
 	}
 
 	json.NewEncoder(w)

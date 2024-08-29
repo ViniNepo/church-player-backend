@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"errors"
+	"mime/multipart"
 	"path/filepath"
 
 	"github.com/ViniNepo/church-player-backend/internal/domain"
@@ -11,7 +12,7 @@ import (
 )
 
 type SongUseCase interface {
-	Create(song *domain.Song) error
+	Create(song *domain.Song, fileHeader *multipart.FileHeader) error
 	FindAll() (*[]dto.SongWithAlbumDTO, error)
 	FindByID(id string) (*domain.Song, error)
 	FindAllByAlbumID(id string) (*[]domain.Song, error)
@@ -29,23 +30,22 @@ func NewSongUseCase(songGateway gateway.Song, manager filemanager.FileManager) S
 	return &songUseCase{songGateway: songGateway, fileManager: manager}
 }
 
-func (s *songUseCase) Create(song *domain.Song) error {
-	if s.fileManager.Exists(song.File) {
+func (s *songUseCase) Create(song *domain.Song, fileHeader *multipart.FileHeader) error {
+	destinationPath := filepath.Join("./files", song.File)
+	if s.fileManager.Exists(destinationPath) {
 		return errors.New("file exists")
 	}
 
-	err := s.songGateway.Create(song)
+	err := s.songGateway.Create(song, nil)
 	if err != nil {
 		return err
 	}
 
 	go func() {
-		destinationPath := filepath.Join("", song.File)
-		err = s.fileManager.Copy(song.File, destinationPath)
+		err = s.fileManager.Copy(fileHeader, "./files")
 		if err != nil {
 			_ = s.songGateway.Delete(song.ID)
 		}
-
 	}()
 
 	return nil
@@ -78,7 +78,8 @@ func (s *songUseCase) Delete(id string) error {
 	}
 
 	go func() {
-		_ = s.fileManager.Delete(song.File)
+		destinationPath := filepath.Join("./files", song.File)
+		_ = s.fileManager.Delete(destinationPath)
 	}()
 
 	return s.songGateway.Delete(id)

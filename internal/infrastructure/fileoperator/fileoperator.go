@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 
 	"github.com/ViniNepo/church-player-backend/internal/filemanager"
@@ -13,33 +15,26 @@ import (
 
 type fileOperator struct{}
 
-func (fo fileOperator) Copy(path string, destination string) error {
-	origin, err := os.OpenFile(path, os.O_RDONLY, 0o777)
+func (fo fileOperator) Copy(fileHeader *multipart.FileHeader, destinationPath string) error {
+	//Abre o arquivo de origem
+	file, err := fileHeader.Open()
 	if err != nil {
-		return fmt.Errorf("opening origin file: %w", err)
+		return errors.New("Could not open uploaded file")
 	}
-	defer origin.Close()
+	defer file.Close()
 
-	info, err := origin.Stat()
+	//Cria o arquivo de destino
+	destPath := filepath.Join(destinationPath, fileHeader.Filename)
+	destFile, err := os.Create(destPath)
 	if err != nil {
-		return fmt.Errorf("getting file info: %w", err)
+		return errors.New("Could not create destination file")
 	}
-
-	dest, err := os.OpenFile(destination, os.O_RDWR|os.O_CREATE, 0o777)
+	defer destFile.Close()
+	//
+	//Copia o arquivo para o destino
+	_, err = io.Copy(destFile, file)
 	if err != nil {
-		return fmt.Errorf("opening destination file: %w", err)
-	}
-	defer dest.Close()
-
-	// copy contents of origin blob to destination file
-	b, err := io.Copy(dest, origin)
-	if err != nil {
-		return fmt.Errorf("copy contents of %s: %w", origin.Name(), err)
-	}
-
-	// if the amount of copied bytes is not equal to the size of the blob file then we return error
-	if info.Size() != b {
-		return errors.New("copied bytes not equal to origin file size")
+		return errors.New("Could not copy file to destination")
 	}
 
 	return nil
