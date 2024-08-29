@@ -3,6 +3,7 @@ package usecase
 import (
 	"github.com/ViniNepo/church-player-backend/internal/domain"
 	"github.com/ViniNepo/church-player-backend/internal/domain/dto"
+	"github.com/ViniNepo/church-player-backend/internal/filemanager"
 	"github.com/ViniNepo/church-player-backend/internal/gateway"
 )
 
@@ -17,10 +18,11 @@ type AlbumUseCase interface {
 type albumUseCase struct {
 	albumGateway gateway.Album
 	songGateway  gateway.Song
+	fileManager  filemanager.FileManager
 }
 
-func NewAlbumUseCase(albumGateway gateway.Album, songGateway gateway.Song) AlbumUseCase {
-	return &albumUseCase{albumGateway: albumGateway, songGateway: songGateway}
+func NewAlbumUseCase(albumGateway gateway.Album, songGateway gateway.Song, manager filemanager.FileManager) AlbumUseCase {
+	return &albumUseCase{albumGateway: albumGateway, songGateway: songGateway, fileManager: manager}
 }
 
 func (u *albumUseCase) CreateAlbum(album *domain.Album) error {
@@ -66,6 +68,17 @@ func (u *albumUseCase) Update(album *domain.Album) error {
 }
 
 func (u *albumUseCase) Delete(id string) error {
+	songs, err := u.songGateway.FindAllByAlbumID(id)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		for _, song := range *songs {
+			_ = u.fileManager.Delete(song.File)
+		}
+	}()
+
 	return u.albumGateway.Delete(id)
 }
 

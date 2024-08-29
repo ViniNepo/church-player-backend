@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/ViniNepo/church-player-backend/internal/config"
+	"github.com/ViniNepo/church-player-backend/internal/infrastructure/fileoperator"
 	"github.com/ViniNepo/church-player-backend/internal/infrastructure/handler"
 	"github.com/ViniNepo/church-player-backend/internal/infrastructure/sqlite"
 	"github.com/ViniNepo/church-player-backend/internal/infrastructure/usecase"
@@ -36,12 +37,15 @@ func main() {
 	sectionDB := sqlite.NewSectionDB(db)
 	worshipDB := sqlite.NewWorshipDB(db)
 
+	fileManager := fileoperator.NewFileManager()
+
 	// Configurar os casos de uso
-	albumUseCase := usecase.NewAlbumUseCase(albumDB, songDB)
-	songUseCase := usecase.NewSongUseCase(songDB)
+	albumUseCase := usecase.NewAlbumUseCase(albumDB, songDB, fileManager)
+	songUseCase := usecase.NewSongUseCase(songDB, fileManager)
 	momentUseCase := usecase.NewMomentUseCase(momentDB)
 	sectionUseCase := usecase.NewSectionUseCase(sectionDB)
 	worshipUseCase := usecase.NewWorshipUseCase(worshipDB, momentDB, songDB, albumDB, sectionDB)
+	fileControlUseCase := usecase.NewFileControlUseCase(fileManager)
 
 	// Iniciar handlers
 	albumHandler := handler.NewAlbumHandler(albumUseCase)
@@ -49,8 +53,11 @@ func main() {
 	momentHandler := handler.NewMomentHandler(momentUseCase)
 	sectionHandler := handler.NewSectionHandler(sectionUseCase)
 	worshipHandler := handler.NewWorshipHandler(worshipUseCase)
+	fileControl := handler.NewFileControlHandler(fileControlUseCase)
 
 	//rotas
+	router.HandleFunc("/file-control/{path}", fileControl.Play).Methods("GET")
+
 	router.HandleFunc("/albums", albumHandler.Create).Methods("POST")
 	router.HandleFunc("/albums", albumHandler.FindAll).Methods("GET")
 	router.HandleFunc("/albums/{id}", albumHandler.FindByID).Methods("GET")

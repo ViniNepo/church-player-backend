@@ -127,3 +127,32 @@ func (s *SectionDB) Delete(id string) error {
 
 	return nil
 }
+
+func (s *SectionDB) DeleteByWorshipID(worshipID, sectionID string) error {
+	if worshipID == "" || sectionID == "" {
+		return errors.New("id is empty")
+	}
+
+	stmt, err := s.DB.Prepare("DELETE FROM sections WHERE worship_id = ?")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(worshipID)
+	if err != nil {
+		return err
+	}
+
+	stmt, err = s.DB.Prepare("DELETE FROM moments WHERE section_id = ?")
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(sectionID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

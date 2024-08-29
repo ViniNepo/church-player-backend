@@ -118,5 +118,17 @@ func (w *worshipUseCase) Update(album *domain.Worship) error {
 }
 
 func (w *worshipUseCase) Delete(id string) error {
+	sections, err := w.sectionGateway.FindAllByWorshipID(id)
+	if err != nil {
+		return err
+	}
+
+	for _, section := range *sections {
+		err = w.sectionGateway.DeleteByWorshipID(id, section.ID)
+		if err != nil {
+			return err
+		}
+	}
+
 	return w.worshipGateway.Delete(id)
 }

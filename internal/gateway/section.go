@@ -9,4 +9,5 @@ type Section interface {
 	FindAllByWorshipID(id string) (*[]domain.Section, error)
 	Update(section *domain.Section) error
 	Delete(id string) error
+	DeleteByWorshipID(worshipID, sectionID string) error
 }
