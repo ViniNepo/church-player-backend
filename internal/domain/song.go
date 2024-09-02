@@ -3,8 +3,10 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/ViniNepo/church-player-backend/internal/domain/dto"
 	"github.com/google/uuid"
@@ -34,7 +36,10 @@ func NewSong(dto dto.CreateSongDTO) (*Song, error) {
 		song.Title = title
 		song.Number = number
 	} else {
-		song.Title = dto.FileName
+		extension := filepath.Ext(dto.FileName)
+		fileNameWithoutExt := strings.TrimSuffix(dto.FileName, extension)
+
+		song.Title = fileNameWithoutExt
 	}
 
 	return &Song{
@@ -52,8 +57,13 @@ func IsValidSongFormat(text string) bool {
 }
 
 func GetSongDetails(text string) (int, string, error) {
+	// Remover a extensão do arquivo
+	extension := filepath.Ext(text)
+	fileNameWithoutExt := strings.TrimSuffix(text, extension)
+
+	// Regex para separar o número e o nome da música
 	regex := regexp.MustCompile(`^\s*(\d+)\s*-\s*(.+)\s*$`)
-	matches := regex.FindStringSubmatch(text)
+	matches := regex.FindStringSubmatch(fileNameWithoutExt)
 
 	if len(matches) != 3 {
 		return 0, "", fmt.Errorf("invalid format")

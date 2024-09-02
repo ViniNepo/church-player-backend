@@ -4,6 +4,7 @@ import (
 	"errors"
 	"mime/multipart"
 	"path/filepath"
+	"time"
 
 	"github.com/ViniNepo/church-player-backend/internal/domain"
 	"github.com/ViniNepo/church-player-backend/internal/domain/dto"
@@ -69,16 +70,18 @@ func (u *albumUseCase) FindAll() (*[]domain.Album, error) {
 
 func (u *albumUseCase) Update(album *domain.Album, fileHeader *multipart.FileHeader) error {
 	if fileHeader != nil {
-		destinationPath := filepath.Join("./images", album.ImageUrl)
+		destinationPath := filepath.Join("./dist/church-player/assets/images", album.ImageUrl)
 		if album.ImageUrl != "church-player-2.png" && u.fileManager.Exists(destinationPath) {
 			return errors.New("image exists")
 		}
 
-		err := u.fileManager.Copy(fileHeader, "./images")
+		err := u.fileManager.Copy(fileHeader, "./dist/church-player/assets/images")
 		if err != nil {
 			return err
 		}
 	}
+
+	time.Sleep(2 * time.Second)
 
 	return u.albumGateway.Update(album)
 }
@@ -96,12 +99,12 @@ func (u *albumUseCase) Delete(id string) error {
 
 	go func() {
 		if album.ImageUrl != "church-player-2.png" {
-			destinationPath := filepath.Join("./images", album.ImageUrl)
+			destinationPath := filepath.Join("./dist/church-player/assets/images", album.ImageUrl)
 			_ = u.fileManager.Delete(destinationPath)
 		}
 
 		for _, song := range *songs {
-			destinationPath := filepath.Join("./files", song.File)
+			destinationPath := filepath.Join("./dist/church-player/assets/files", song.File)
 			_ = u.fileManager.Delete(destinationPath)
 		}
 	}()

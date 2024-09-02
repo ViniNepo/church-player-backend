@@ -29,13 +29,13 @@ func (h *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(100 << 20) // 10 MB
+	err := r.ParseMultipartForm(1000 << 20) // 1 GB
 	if err != nil {
 		http.Error(w, "Could not parse multipart form", http.StatusBadRequest)
 		return
 	}
 
-	destDir := "./files"
+	destDir := "./dist/church-player/assets/files"
 	os.MkdirAll(destDir, os.ModePerm)
 
 	files := r.MultipartForm.File["files"]

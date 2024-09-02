@@ -89,13 +89,13 @@ func (h *AlbumHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Tenta analisar o formulário multipart (pode conter arquivos)
-	err := r.ParseMultipartForm(100 << 20) // 100 MB
+	err := r.ParseMultipartForm(50 << 20) // 100 MB
 	if err != nil && err != http.ErrNotMultipart {
 		http.Error(w, "Could not parse multipart form", http.StatusBadRequest)
 		return
 	}
 
-	destDir := "./images"
+	destDir := "./dist/church-player/assets/images"
 	os.MkdirAll(destDir, os.ModePerm)
 
 	// Processa os arquivos, se houver

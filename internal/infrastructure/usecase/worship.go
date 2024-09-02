@@ -4,6 +4,7 @@ import (
 	"errors"
 	"mime/multipart"
 	"path/filepath"
+	"time"
 
 	"github.com/ViniNepo/church-player-backend/internal/domain"
 	"github.com/ViniNepo/church-player-backend/internal/domain/dto"
@@ -122,16 +123,18 @@ func (w *worshipUseCase) FindAll() (*[]domain.Worship, error) {
 
 func (w *worshipUseCase) Update(worship *domain.Worship, fileHeader *multipart.FileHeader) error {
 	if fileHeader != nil {
-		destinationPath := filepath.Join("./images", worship.ImageUrl)
+		destinationPath := filepath.Join("./dist/church-player/assets/images", worship.ImageUrl)
 		if worship.ImageUrl != "church-player-2.png" && w.fileManager.Exists(destinationPath) {
 			return errors.New("image exists")
 		}
 
-		err := w.fileManager.Copy(fileHeader, "./images")
+		err := w.fileManager.Copy(fileHeader, "./dist/church-player/assets/images")
 		if err != nil {
 			return err
 		}
 	}
+
+	time.Sleep(2 * time.Second)
 
 	return w.worshipGateway.Update(worship)
 }
@@ -144,7 +147,7 @@ func (w *worshipUseCase) Delete(id string) error {
 
 	go func() {
 		if worship.ImageUrl != "church-player-2.png" {
-			destinationPath := filepath.Join("./images", worship.ImageUrl)
+			destinationPath := filepath.Join("./dist/church-player/assets/images", worship.ImageUrl)
 			_ = w.fileManager.Delete(destinationPath)
 		}
 	}()

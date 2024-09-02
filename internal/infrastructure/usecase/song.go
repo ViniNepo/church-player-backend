@@ -31,7 +31,7 @@ func NewSongUseCase(songGateway gateway.Song, manager filemanager.FileManager) S
 }
 
 func (s *songUseCase) Create(song *domain.Song, fileHeader *multipart.FileHeader) error {
-	destinationPath := filepath.Join("./files", song.File)
+	destinationPath := filepath.Join("./dist/church-player/assets/files", song.File)
 	if s.fileManager.Exists(destinationPath) {
 		return errors.New("file exists")
 	}
@@ -41,12 +41,10 @@ func (s *songUseCase) Create(song *domain.Song, fileHeader *multipart.FileHeader
 		return err
 	}
 
-	go func() {
-		err = s.fileManager.Copy(fileHeader, "./files")
-		if err != nil {
-			_ = s.songGateway.Delete(song.ID)
-		}
-	}()
+	err = s.fileManager.Copy(fileHeader, "./dist/church-player/assets/files")
+	if err != nil {
+		return s.songGateway.Delete(song.ID)
+	}
 
 	return nil
 }
@@ -78,7 +76,7 @@ func (s *songUseCase) Delete(id string) error {
 	}
 
 	go func() {
-		destinationPath := filepath.Join("./files", song.File)
+		destinationPath := filepath.Join("./dist/church-player/assets/files", song.File)
 		_ = s.fileManager.Delete(destinationPath)
 	}()
 
