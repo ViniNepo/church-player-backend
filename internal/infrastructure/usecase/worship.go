@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"errors"
+	"fmt"
 	"mime/multipart"
 	"path/filepath"
 	"time"
@@ -123,9 +123,8 @@ func (w *worshipUseCase) FindAll() (*[]domain.Worship, error) {
 
 func (w *worshipUseCase) Update(worship *domain.Worship, fileHeader *multipart.FileHeader) error {
 	if fileHeader != nil {
-		destinationPath := filepath.Join("./dist/church-player/assets/images", worship.ImageUrl)
-		if worship.ImageUrl != "church-player-2.png" && w.fileManager.Exists(destinationPath) {
-			return errors.New("image exists")
+		if worship.ImageUrl == "church-player-2.png" {
+			return fmt.Errorf("image cannot be use this name: %s", worship.ImageUrl)
 		}
 
 		err := w.fileManager.Copy(fileHeader, "./dist/church-player/assets/images")

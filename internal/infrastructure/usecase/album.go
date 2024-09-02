@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"errors"
+	"fmt"
 	"mime/multipart"
 	"path/filepath"
 	"time"
@@ -70,18 +70,17 @@ func (u *albumUseCase) FindAll() (*[]domain.Album, error) {
 
 func (u *albumUseCase) Update(album *domain.Album, fileHeader *multipart.FileHeader) error {
 	if fileHeader != nil {
-		destinationPath := filepath.Join("./dist/church-player/assets/images", album.ImageUrl)
-		if album.ImageUrl != "church-player-2.png" && u.fileManager.Exists(destinationPath) {
-			return errors.New("image exists")
+		if album.ImageUrl == "church-player-2.png" {
+			return fmt.Errorf("image cannot be use this name: %s", album.ImageUrl)
 		}
 
 		err := u.fileManager.Copy(fileHeader, "./dist/church-player/assets/images")
 		if err != nil {
 			return err
 		}
-	}
 
-	time.Sleep(2 * time.Second)
+		time.Sleep(2 * time.Second)
+	}
 
 	return u.albumGateway.Update(album)
 }
