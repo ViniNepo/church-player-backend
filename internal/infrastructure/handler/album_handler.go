@@ -95,7 +95,7 @@ func (h *AlbumHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	destDir := "./dist/church-player/assets/images"
+	destDir := "././ChurchPlayer/resources/app/dist/church-player/assets/images"
 	os.MkdirAll(destDir, os.ModePerm)
 
 	// Processa os arquivos, se houver

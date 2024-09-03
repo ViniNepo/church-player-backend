@@ -3,7 +3,6 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
-	"log"
 	"mime/multipart"
 
 	"github.com/ViniNepo/church-player-backend/internal/domain"
@@ -28,7 +27,7 @@ func (s *SongDB) Create(song *domain.Song, fileHeader *multipart.FileHeader) err
 	var maxOrder *int
 	err := s.DB.QueryRow("SELECT MAX(song_order) FROM songs WHERE album_id=?", song.AlbumID).Scan(&maxOrder)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	var newOrder int

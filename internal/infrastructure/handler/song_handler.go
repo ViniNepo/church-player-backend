@@ -35,7 +35,7 @@ func (h *SongHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	destDir := "./dist/church-player/assets/files"
+	destDir := "././ChurchPlayer/resources/app/dist/church-player/assets/files"
 	os.MkdirAll(destDir, os.ModePerm)
 
 	files := r.MultipartForm.File["files"]

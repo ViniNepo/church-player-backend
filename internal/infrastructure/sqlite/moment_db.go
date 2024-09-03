@@ -3,8 +3,6 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
-	"log"
-
 	"github.com/ViniNepo/church-player-backend/internal/domain"
 	"github.com/ViniNepo/church-player-backend/internal/domain/dto"
 )
@@ -27,7 +25,7 @@ func (m *MomentDB) Create(moment *domain.Moment) error {
 	var maxOrder *int
 	err := m.DB.QueryRow("SELECT MAX(song_order) FROM moments WHERE section_id=?", moment.SectionID).Scan(&maxOrder)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	var newOrder int

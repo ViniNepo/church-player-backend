@@ -3,11 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"log"
-	"net/http"
-	"os"
-	"path/filepath"
-
+	"fmt"
 	"github.com/ViniNepo/church-player-backend/internal/config"
 	"github.com/ViniNepo/church-player-backend/internal/infrastructure/fileoperator"
 	"github.com/ViniNepo/church-player-backend/internal/infrastructure/handler"
@@ -17,23 +13,33 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/urfave/negroni"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
 )
 
 func main() {
 	// Carregar a configuração
 	cfg := config.LoadConfig()
 
-	// Obtém o caminho absoluto do executável
-	execPath, err := os.Executable()
+	executable, err := os.Executable()
 	if err != nil {
-		log.Fatalf("Failed to get executable path: %s", err)
+		fmt.Println("Erro ao obter o caminho do executável:", err)
+		return
 	}
 
-	// Obtém o diretório onde o executável está localizado
-	dir := filepath.Dir(execPath)
+	// Obtém o diretório onde o binário está localizado
+	executableDir := filepath.Dir(executable)
+
+	// Constrói o caminho para o arquivo que está na mesma pasta do binário
+	dbPath := filepath.Join(executableDir, "church.db")
+
+	log.Print(executableDir)
+	log.Print(dbPath)
 
 	// Conectar ao banco de dados SQLite
-	db, err := sql.Open("sqlite3", filepath.Join(dir, "church.db"))
+	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -49,7 +55,7 @@ func main() {
 	sectionDB := sqlite.NewSectionDB(db)
 	worshipDB := sqlite.NewWorshipDB(db)
 
-	fileManager := fileoperator.NewFileManager(dir)
+	fileManager := fileoperator.NewFileManager(executableDir)
 
 	// Configurar os casos de uso
 	albumUseCase := usecase.NewAlbumUseCase(albumDB, songDB, fileManager)

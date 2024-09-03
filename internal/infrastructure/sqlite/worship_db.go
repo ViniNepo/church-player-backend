@@ -3,8 +3,6 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
-	"log"
-
 	"github.com/ViniNepo/church-player-backend/internal/domain"
 )
 
@@ -26,7 +24,7 @@ func (w *WorshipDB) Create(worship *domain.Worship) error {
 	var maxOrder *int
 	err := w.DB.QueryRow("SELECT MAX(worship_order) FROM worships").Scan(&maxOrder)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	var newOrder int

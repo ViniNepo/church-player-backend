@@ -27,7 +27,7 @@ func (h *FileControlHandler) Play(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	destPath := filepath.Join("./dist/church-player/assets/files", filePath)
+	destPath := filepath.Join("dist/church-player/assets/files", filePath)
 	err := h.fileControlUseCase.Play(destPath)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnprocessableEntity)

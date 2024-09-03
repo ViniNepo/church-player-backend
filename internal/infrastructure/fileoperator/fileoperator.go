@@ -28,7 +28,9 @@ func (fo fileOperator) Copy(fileHeader *multipart.FileHeader, destinationPath st
 
 	//Cria o arquivo de destino
 	destPath := filepath.Join(fo.osPath, destinationPath, fileHeader.Filename)
-	log.Print(destPath)
+	log.Print(fo.osPath)
+	log.Print(destinationPath)
+	log.Print(fileHeader.Filename)
 	destFile, err := os.Create(destPath)
 	if err != nil {
 		return errors.New("Could not create destination file")
@@ -49,13 +51,10 @@ func (fo fileOperator) Read(path string) error {
 
 	switch runtime.GOOS {
 	case "windows":
-		log.Print(filepath.Join(fo.osPath, path))
 		cmd = exec.Command("cmd", "/C", "start", filepath.Join(fo.osPath, path))
 	case "darwin": // macOS
-		log.Print(filepath.Join(fo.osPath, path))
 		cmd = exec.Command("open", filepath.Join(fo.osPath, path))
 	case "linux":
-		log.Print(filepath.Join(fo.osPath, path))
 		cmd = exec.Command("xdg-open", filepath.Join(fo.osPath, path))
 	default:
 		return fmt.Errorf("unsupported platform")
@@ -69,7 +68,6 @@ func (fo fileOperator) Read(path string) error {
 }
 
 func (fo fileOperator) Delete(path string) error {
-	filepath.Join(fo.osPath, path)
 	if err := os.Remove(filepath.Join(fo.osPath, path)); err != nil {
 		return fmt.Errorf("could not delete file: %w", err)
 	}
@@ -77,7 +75,6 @@ func (fo fileOperator) Delete(path string) error {
 }
 
 func (fo fileOperator) Exists(path string) bool {
-	log.Print(filepath.Join(fo.osPath, path))
 	_, err := os.Stat(filepath.Join(fo.osPath, path))
 	return !errors.Is(err, os.ErrNotExist)
 }

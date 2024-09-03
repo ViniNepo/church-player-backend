@@ -3,8 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
-	"log"
-
+	"fmt"
 	"github.com/ViniNepo/church-player-backend/internal/domain"
 )
 
@@ -26,7 +25,7 @@ func (a *AlbumDB) Create(album *domain.Album) error {
 	var maxOrder *int
 	err := a.DB.QueryRow("SELECT MAX(album_order) FROM albums").Scan(&maxOrder)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error getting max order: %v", err)
 	}
 
 	var newOrder int
@@ -38,13 +37,13 @@ func (a *AlbumDB) Create(album *domain.Album) error {
 
 	stmt, err := a.DB.Prepare("INSERT INTO albums (id, title, image_url, album_order) VALUES (?, ?, ?, ?)")
 	if err != nil {
-		return err
+		return fmt.Errorf("error preparing statement: %v", err)
 	}
 
 	defer stmt.Close()
 	_, err = stmt.Exec(album.ID, album.Title, album.ImageUrl, newOrder)
 	if err != nil {
-		return err
+		return fmt.Errorf("error inserting album: %v", err)
 	}
 
 	return nil
