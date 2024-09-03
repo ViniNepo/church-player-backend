@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"os"
 	"os/exec"
@@ -13,7 +14,9 @@ import (
 	"github.com/ViniNepo/church-player-backend/internal/filemanager"
 )
 
-type fileOperator struct{}
+type fileOperator struct {
+	osPath string
+}
 
 func (fo fileOperator) Copy(fileHeader *multipart.FileHeader, destinationPath string) error {
 	//Abre o arquivo de origem
@@ -24,7 +27,8 @@ func (fo fileOperator) Copy(fileHeader *multipart.FileHeader, destinationPath st
 	defer file.Close()
 
 	//Cria o arquivo de destino
-	destPath := filepath.Join(destinationPath, fileHeader.Filename)
+	destPath := filepath.Join(fo.osPath, destinationPath, fileHeader.Filename)
+	log.Print(destPath)
 	destFile, err := os.Create(destPath)
 	if err != nil {
 		return errors.New("Could not create destination file")
@@ -45,11 +49,14 @@ func (fo fileOperator) Read(path string) error {
 
 	switch runtime.GOOS {
 	case "windows":
-		cmd = exec.Command("cmd", "/C", "start", path)
+		log.Print(filepath.Join(fo.osPath, path))
+		cmd = exec.Command("cmd", "/C", "start", filepath.Join(fo.osPath, path))
 	case "darwin": // macOS
-		cmd = exec.Command("open", path)
+		log.Print(filepath.Join(fo.osPath, path))
+		cmd = exec.Command("open", filepath.Join(fo.osPath, path))
 	case "linux":
-		cmd = exec.Command("xdg-open", path)
+		log.Print(filepath.Join(fo.osPath, path))
+		cmd = exec.Command("xdg-open", filepath.Join(fo.osPath, path))
 	default:
 		return fmt.Errorf("unsupported platform")
 	}
@@ -62,17 +69,21 @@ func (fo fileOperator) Read(path string) error {
 }
 
 func (fo fileOperator) Delete(path string) error {
-	if err := os.Remove(path); err != nil {
+	filepath.Join(fo.osPath, path)
+	if err := os.Remove(filepath.Join(fo.osPath, path)); err != nil {
 		return fmt.Errorf("could not delete file: %w", err)
 	}
 	return nil
 }
 
 func (fo fileOperator) Exists(path string) bool {
-	_, err := os.Stat(path)
+	log.Print(filepath.Join(fo.osPath, path))
+	_, err := os.Stat(filepath.Join(fo.osPath, path))
 	return !errors.Is(err, os.ErrNotExist)
 }
 
-func NewFileManager() filemanager.FileManager {
-	return fileOperator{}
+func NewFileManager(dir string) filemanager.FileManager {
+	return fileOperator{
+		osPath: dir,
+	}
 }

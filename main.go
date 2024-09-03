@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/ViniNepo/church-player-backend/internal/config"
 	"github.com/ViniNepo/church-player-backend/internal/infrastructure/fileoperator"
@@ -21,8 +23,17 @@ func main() {
 	// Carregar a configuração
 	cfg := config.LoadConfig()
 
+	// Obtém o caminho absoluto do executável
+	execPath, err := os.Executable()
+	if err != nil {
+		log.Fatalf("Failed to get executable path: %s", err)
+	}
+
+	// Obtém o diretório onde o executável está localizado
+	dir := filepath.Dir(execPath)
+
 	// Conectar ao banco de dados SQLite
-	db, err := sql.Open("sqlite3", "church.db")
+	db, err := sql.Open("sqlite3", filepath.Join(dir, "church.db"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,7 +49,7 @@ func main() {
 	sectionDB := sqlite.NewSectionDB(db)
 	worshipDB := sqlite.NewWorshipDB(db)
 
-	fileManager := fileoperator.NewFileManager()
+	fileManager := fileoperator.NewFileManager(dir)
 
 	// Configurar os casos de uso
 	albumUseCase := usecase.NewAlbumUseCase(albumDB, songDB, fileManager)

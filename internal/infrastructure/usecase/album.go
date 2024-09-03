@@ -74,7 +74,7 @@ func (u *albumUseCase) Update(album *domain.Album, fileHeader *multipart.FileHea
 			return fmt.Errorf("image cannot be use this name: %s", album.ImageUrl)
 		}
 
-		err := u.fileManager.Copy(fileHeader, "./dist/church-player/assets/images")
+		err := u.fileManager.Copy(fileHeader, "dist/church-player/assets/images")
 		if err != nil {
 			return err
 		}
@@ -98,12 +98,12 @@ func (u *albumUseCase) Delete(id string) error {
 
 	go func() {
 		if album.ImageUrl != "church-player-2.png" {
-			destinationPath := filepath.Join("./dist/church-player/assets/images", album.ImageUrl)
+			destinationPath := filepath.Join("dist/church-player/assets/images", album.ImageUrl)
 			_ = u.fileManager.Delete(destinationPath)
 		}
 
 		for _, song := range *songs {
-			destinationPath := filepath.Join("./dist/church-player/assets/files", song.File)
+			destinationPath := filepath.Join("dist/church-player/assets/files", song.File)
 			_ = u.fileManager.Delete(destinationPath)
 		}
 	}()

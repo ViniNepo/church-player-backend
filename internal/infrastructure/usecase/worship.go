@@ -74,7 +74,12 @@ func (w *worshipUseCase) FindByID(id string) (*dto.WorshipDTO, error) {
 			if moment.SongID != "" {
 				song, err := w.songGateway.FindByID(moment.SongID)
 				if err != nil {
-					return nil, err
+					momentDTO.ID = moment.ID
+					momentDTO.Title = moment.Title
+					momentDTO.SectionID = moment.SectionID
+
+					momentsDTO = append(momentsDTO, momentDTO)
+					continue
 				}
 
 				album, err := w.albumGateway.FindByID(song.AlbumID)
@@ -127,7 +132,7 @@ func (w *worshipUseCase) Update(worship *domain.Worship, fileHeader *multipart.F
 			return fmt.Errorf("image cannot be use this name: %s", worship.ImageUrl)
 		}
 
-		err := w.fileManager.Copy(fileHeader, "./dist/church-player/assets/images")
+		err := w.fileManager.Copy(fileHeader, "dist/church-player/assets/images")
 		if err != nil {
 			return err
 		}
@@ -146,7 +151,7 @@ func (w *worshipUseCase) Delete(id string) error {
 
 	go func() {
 		if worship.ImageUrl != "church-player-2.png" {
-			destinationPath := filepath.Join("./dist/church-player/assets/images", worship.ImageUrl)
+			destinationPath := filepath.Join("dist/church-player/assets/images", worship.ImageUrl)
 			_ = w.fileManager.Delete(destinationPath)
 		}
 	}()

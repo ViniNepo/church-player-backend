@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"errors"
+	"fmt"
 	"mime/multipart"
 	"path/filepath"
 
@@ -31,9 +31,9 @@ func NewSongUseCase(songGateway gateway.Song, manager filemanager.FileManager) S
 }
 
 func (s *songUseCase) Create(song *domain.Song, fileHeader *multipart.FileHeader) error {
-	destinationPath := filepath.Join("./dist/church-player/assets/files", song.File)
+	destinationPath := filepath.Join("dist/church-player/assets/files", song.File)
 	if s.fileManager.Exists(destinationPath) {
-		return errors.New("file exists")
+		return fmt.Errorf("file %s already exists", song.File)
 	}
 
 	err := s.songGateway.Create(song, nil)
@@ -41,7 +41,7 @@ func (s *songUseCase) Create(song *domain.Song, fileHeader *multipart.FileHeader
 		return err
 	}
 
-	err = s.fileManager.Copy(fileHeader, "./dist/church-player/assets/files")
+	err = s.fileManager.Copy(fileHeader, "dist/church-player/assets/files")
 	if err != nil {
 		return s.songGateway.Delete(song.ID)
 	}
@@ -76,7 +76,7 @@ func (s *songUseCase) Delete(id string) error {
 	}
 
 	go func() {
-		destinationPath := filepath.Join("./dist/church-player/assets/files", song.File)
+		destinationPath := filepath.Join("dist/church-player/assets/files", song.File)
 		_ = s.fileManager.Delete(destinationPath)
 	}()
 
