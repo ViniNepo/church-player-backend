@@ -51,19 +51,20 @@ func (fo fileOperator) Read(path string) error {
 
 	switch runtime.GOOS {
 	case "windows":
-		cmd = exec.Command("cmd", "/C", "start", filepath.Join(fo.osPath, path))
-	case "darwin": // macOS
+		// No Windows, usamos 'rundll32' para abrir o arquivo sem abrir o terminal
+		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", filepath.Join(fo.osPath, path))
+	case "darwin":
 		cmd = exec.Command("open", filepath.Join(fo.osPath, path))
-	case "linux":
-		cmd = exec.Command("xdg-open", filepath.Join(fo.osPath, path))
 	default:
-		return fmt.Errorf("unsupported platform")
+		cmd = exec.Command("xdg-open", filepath.Join(fo.osPath, path))
 	}
 
-	if err := cmd.Start(); err != nil {
-		return fmt.Errorf("could not open file: %w", err)
+	err := cmd.Start()
+	if err != nil {
+		return fmt.Errorf("erro ao abrir o arquivo: %v", err)
 	}
 
+	fmt.Println("Arquivo aberto com sucesso!")
 	return nil
 }
 
