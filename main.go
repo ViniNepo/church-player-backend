@@ -4,6 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+
 	"github.com/ViniNepo/church-player-backend/internal/config"
 	"github.com/ViniNepo/church-player-backend/internal/infrastructure/fileoperator"
 	"github.com/ViniNepo/church-player-backend/internal/infrastructure/handler"
@@ -13,10 +18,6 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/urfave/negroni"
-	"log"
-	"net/http"
-	"os"
-	"path/filepath"
 )
 
 func main() {
@@ -35,79 +36,438 @@ func main() {
 	// Constrói o caminho para o arquivo que está na mesma pasta do binário
 	dbPath := filepath.Join(executableDir, "church.db")
 
-	log.Print(executableDir)
-	log.Print(dbPath)
-
-	// Conectar ao banco de dados SQLite
-	db, err := sql.Open("sqlite3", dbPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
 	// Configurar o roteador Gorilla Mux
 	router := mux.NewRouter()
 
-	// Configura o banco de dados
-	albumDB := sqlite.NewAlbumDB(db)
-	songDB := sqlite.NewSongDB(db)
-	momentDB := sqlite.NewMomentDB(db)
-	sectionDB := sqlite.NewSectionDB(db)
-	worshipDB := sqlite.NewWorshipDB(db)
-
 	fileManager := fileoperator.NewFileManager(executableDir)
-
-	// Configurar os casos de uso
-	albumUseCase := usecase.NewAlbumUseCase(albumDB, songDB, fileManager)
-	songUseCase := usecase.NewSongUseCase(songDB, fileManager)
-	momentUseCase := usecase.NewMomentUseCase(momentDB)
-	sectionUseCase := usecase.NewSectionUseCase(sectionDB)
-	worshipUseCase := usecase.NewWorshipUseCase(worshipDB, momentDB, songDB, albumDB, sectionDB, fileManager)
-	fileControlUseCase := usecase.NewFileControlUseCase(fileManager)
-
-	// Iniciar handlers
-	albumHandler := handler.NewAlbumHandler(albumUseCase)
-	songHandler := handler.NewSongHandler(songUseCase)
-	momentHandler := handler.NewMomentHandler(momentUseCase)
-	sectionHandler := handler.NewSectionHandler(sectionUseCase)
-	worshipHandler := handler.NewWorshipHandler(worshipUseCase)
-	fileControl := handler.NewFileControlHandler(fileControlUseCase)
 
 	//rotas
 	router.HandleFunc("/ping", pong).Methods("GET")
 
-	router.HandleFunc("/file-control/{path}", fileControl.Play).Methods("GET")
+	router.HandleFunc("/file-control/{path}", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
 
-	router.HandleFunc("/albums", albumHandler.Create).Methods("POST")
-	router.HandleFunc("/albums", albumHandler.FindAll).Methods("GET")
-	router.HandleFunc("/albums/{id}", albumHandler.FindByID).Methods("GET")
-	router.HandleFunc("/albums", albumHandler.Update).Methods("PATCH")
-	router.HandleFunc("/albums/{id}", albumHandler.Delete).Methods("DELETE")
+		fileControlUseCase := usecase.NewFileControlUseCase(fileManager)
+		fileControl := handler.NewFileControlHandler(fileControlUseCase)
+		fileControl.Play(w, r)
+	}).Methods("GET")
 
-	router.HandleFunc("/songs/{album_id}", songHandler.Create).Methods("POST")
-	router.HandleFunc("/songs", songHandler.FindAll).Methods("GET")
-	router.HandleFunc("/songs/{id}", songHandler.FindById).Methods("GET")
-	router.HandleFunc("/songs", songHandler.Update).Methods("PATCH")
-	router.HandleFunc("/songs/orders", songHandler.UpdateOrder).Methods("PATCH")
-	router.HandleFunc("/songs/{id}", songHandler.Delete).Methods("DELETE")
+	router.HandleFunc("/albums", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
 
-	router.HandleFunc("/moments", momentHandler.Create).Methods("POST")
-	router.HandleFunc("/moments/{id}", momentHandler.FindByID).Methods("GET")
-	router.HandleFunc("/moments/{id}/all", momentHandler.FindAllBySectionID).Methods("GET")
-	router.HandleFunc("/moments", momentHandler.Update).Methods("PATCH")
-	router.HandleFunc("/moments/orders", momentHandler.UpdateOrder).Methods("PATCH")
-	router.HandleFunc("/moments/{id}", momentHandler.Delete).Methods("DELETE")
+		albumDB := sqlite.NewAlbumDB(db)
+		songDB := sqlite.NewSongDB(db)
+		albumUseCase := usecase.NewAlbumUseCase(albumDB, songDB, fileManager)
+		albumHandler := handler.NewAlbumHandler(albumUseCase)
 
-	router.HandleFunc("/sections", sectionHandler.Create).Methods("POST")
-	router.HandleFunc("/sections/{id}", sectionHandler.FindAllByWorshipID).Methods("GET")
-	router.HandleFunc("/sections", sectionHandler.Update).Methods("PATCH")
-	router.HandleFunc("/sections/{id}", sectionHandler.Delete).Methods("DELETE")
+		albumHandler.Create(w, r)
+	}).Methods("POST")
 
-	router.HandleFunc("/worships", worshipHandler.Create).Methods("POST")
-	router.HandleFunc("/worships", worshipHandler.FindAll).Methods("GET")
-	router.HandleFunc("/worships/{id}", worshipHandler.FindByID).Methods("GET")
-	router.HandleFunc("/worships", worshipHandler.Update).Methods("PATCH")
-	router.HandleFunc("/worships/{id}", worshipHandler.Delete).Methods("DELETE")
+	router.HandleFunc("/albums", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		albumDB := sqlite.NewAlbumDB(db)
+		songDB := sqlite.NewSongDB(db)
+		albumUseCase := usecase.NewAlbumUseCase(albumDB, songDB, fileManager)
+		albumHandler := handler.NewAlbumHandler(albumUseCase)
+
+		albumHandler.FindAll(w, r)
+	}).Methods("GET")
+
+	router.HandleFunc("/albums/{id}", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		albumDB := sqlite.NewAlbumDB(db)
+		songDB := sqlite.NewSongDB(db)
+		albumUseCase := usecase.NewAlbumUseCase(albumDB, songDB, fileManager)
+		albumHandler := handler.NewAlbumHandler(albumUseCase)
+
+		albumHandler.FindByID(w, r)
+	}).Methods("GET")
+
+	router.HandleFunc("/albums", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		albumDB := sqlite.NewAlbumDB(db)
+		songDB := sqlite.NewSongDB(db)
+		albumUseCase := usecase.NewAlbumUseCase(albumDB, songDB, fileManager)
+		albumHandler := handler.NewAlbumHandler(albumUseCase)
+
+		albumHandler.Update(w, r)
+	}).Methods("PATCH")
+
+	router.HandleFunc("/albums/{id}", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		albumDB := sqlite.NewAlbumDB(db)
+		songDB := sqlite.NewSongDB(db)
+		albumUseCase := usecase.NewAlbumUseCase(albumDB, songDB, fileManager)
+		albumHandler := handler.NewAlbumHandler(albumUseCase)
+
+		albumHandler.Delete(w, r)
+	}).Methods("DELETE")
+
+	router.HandleFunc("/songs/{album_id}", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		songDB := sqlite.NewSongDB(db)
+		songUseCase := usecase.NewSongUseCase(songDB, fileManager)
+		albumHandler := handler.NewSongHandler(songUseCase)
+
+		albumHandler.Delete(w, r)
+	}).Methods("POST")
+
+	router.HandleFunc("/songs", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		songDB := sqlite.NewSongDB(db)
+		songUseCase := usecase.NewSongUseCase(songDB, fileManager)
+		albumHandler := handler.NewSongHandler(songUseCase)
+
+		albumHandler.FindAll(w, r)
+	}).Methods("GET")
+
+	router.HandleFunc("/songs/{id}", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		songDB := sqlite.NewSongDB(db)
+		songUseCase := usecase.NewSongUseCase(songDB, fileManager)
+		albumHandler := handler.NewSongHandler(songUseCase)
+
+		albumHandler.FindById(w, r)
+	}).Methods("GET")
+
+	router.HandleFunc("/songs", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		songDB := sqlite.NewSongDB(db)
+		songUseCase := usecase.NewSongUseCase(songDB, fileManager)
+		albumHandler := handler.NewSongHandler(songUseCase)
+
+		albumHandler.Update(w, r)
+	}).Methods("PATCH")
+
+	router.HandleFunc("/songs/orders", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		songDB := sqlite.NewSongDB(db)
+		songUseCase := usecase.NewSongUseCase(songDB, fileManager)
+		albumHandler := handler.NewSongHandler(songUseCase)
+
+		albumHandler.UpdateOrder(w, r)
+	}).Methods("PATCH")
+
+	router.HandleFunc("/songs/{id}", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		songDB := sqlite.NewSongDB(db)
+		songUseCase := usecase.NewSongUseCase(songDB, fileManager)
+		albumHandler := handler.NewSongHandler(songUseCase)
+
+		albumHandler.Delete(w, r)
+	}).Methods("DELETE")
+
+	router.HandleFunc("/moments", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		momentDB := sqlite.NewMomentDB(db)
+		momentUseCase := usecase.NewMomentUseCase(momentDB)
+		momentHandler := handler.NewMomentHandler(momentUseCase)
+
+		momentHandler.Create(w, r)
+	}).Methods("POST")
+
+	router.HandleFunc("/moments/{id}", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		momentDB := sqlite.NewMomentDB(db)
+		momentUseCase := usecase.NewMomentUseCase(momentDB)
+		momentHandler := handler.NewMomentHandler(momentUseCase)
+
+		momentHandler.FindByID(w, r)
+	}).Methods("GET")
+
+	router.HandleFunc("/moments/{id}/all", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		momentDB := sqlite.NewMomentDB(db)
+		momentUseCase := usecase.NewMomentUseCase(momentDB)
+		momentHandler := handler.NewMomentHandler(momentUseCase)
+
+		momentHandler.FindAllBySectionID(w, r)
+	}).Methods("GET")
+
+	router.HandleFunc("/moments", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		momentDB := sqlite.NewMomentDB(db)
+		momentUseCase := usecase.NewMomentUseCase(momentDB)
+		momentHandler := handler.NewMomentHandler(momentUseCase)
+
+		momentHandler.Update(w, r)
+	}).Methods("PATCH")
+
+	router.HandleFunc("/moments/orders", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		momentDB := sqlite.NewMomentDB(db)
+		momentUseCase := usecase.NewMomentUseCase(momentDB)
+		momentHandler := handler.NewMomentHandler(momentUseCase)
+
+		momentHandler.UpdateOrder(w, r)
+	}).Methods("PATCH")
+
+	router.HandleFunc("/moments/{id}", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		momentDB := sqlite.NewMomentDB(db)
+		momentUseCase := usecase.NewMomentUseCase(momentDB)
+		momentHandler := handler.NewMomentHandler(momentUseCase)
+
+		momentHandler.Delete(w, r)
+	}).Methods("DELETE")
+
+	router.HandleFunc("/sections", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		sectionDB := sqlite.NewSectionDB(db)
+		sectionUseCase := usecase.NewSectionUseCase(sectionDB)
+		sectionHandler := handler.NewSectionHandler(sectionUseCase)
+
+		sectionHandler.Create(w, r)
+	}).Methods("POST")
+
+	router.HandleFunc("/sections/{id}", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		sectionDB := sqlite.NewSectionDB(db)
+		sectionUseCase := usecase.NewSectionUseCase(sectionDB)
+		sectionHandler := handler.NewSectionHandler(sectionUseCase)
+
+		sectionHandler.FindAllByWorshipID(w, r)
+	}).Methods("GET")
+
+	router.HandleFunc("/sections", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		sectionDB := sqlite.NewSectionDB(db)
+		sectionUseCase := usecase.NewSectionUseCase(sectionDB)
+		sectionHandler := handler.NewSectionHandler(sectionUseCase)
+
+		sectionHandler.Update(w, r)
+	}).Methods("PATCH")
+
+	router.HandleFunc("/sections/{id}", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		sectionDB := sqlite.NewSectionDB(db)
+		sectionUseCase := usecase.NewSectionUseCase(sectionDB)
+		sectionHandler := handler.NewSectionHandler(sectionUseCase)
+
+		sectionHandler.Delete(w, r)
+	}).Methods("DELETE")
+
+
+	router.HandleFunc("/worships", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		albumDB := sqlite.NewAlbumDB(db)
+		songDB := sqlite.NewSongDB(db)
+		momentDB := sqlite.NewMomentDB(db)
+		sectionDB := sqlite.NewSectionDB(db)
+		worshipDB := sqlite.NewWorshipDB(db)
+		worshipUseCase := usecase.NewWorshipUseCase(worshipDB, momentDB, songDB, albumDB, sectionDB, fileManager)
+		worshipHandler := handler.NewWorshipHandler(worshipUseCase)
+		worshipHandler.Create(w, r)
+	}).Methods("POST")
+
+	router.HandleFunc("/worships", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		albumDB := sqlite.NewAlbumDB(db)
+		songDB := sqlite.NewSongDB(db)
+		momentDB := sqlite.NewMomentDB(db)
+		sectionDB := sqlite.NewSectionDB(db)
+		worshipDB := sqlite.NewWorshipDB(db)
+		worshipUseCase := usecase.NewWorshipUseCase(worshipDB, momentDB, songDB, albumDB, sectionDB, fileManager)
+		worshipHandler := handler.NewWorshipHandler(worshipUseCase)
+		worshipHandler.FindAll(w, r)
+	}).Methods("GET")
+
+	router.HandleFunc("/worships/{id}", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		albumDB := sqlite.NewAlbumDB(db)
+		songDB := sqlite.NewSongDB(db)
+		momentDB := sqlite.NewMomentDB(db)
+		sectionDB := sqlite.NewSectionDB(db)
+		worshipDB := sqlite.NewWorshipDB(db)
+		worshipUseCase := usecase.NewWorshipUseCase(worshipDB, momentDB, songDB, albumDB, sectionDB, fileManager)
+		worshipHandler := handler.NewWorshipHandler(worshipUseCase)
+		worshipHandler.FindByID(w, r)
+	}).Methods("GET")
+
+	router.HandleFunc("/worships", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		albumDB := sqlite.NewAlbumDB(db)
+		songDB := sqlite.NewSongDB(db)
+		momentDB := sqlite.NewMomentDB(db)
+		sectionDB := sqlite.NewSectionDB(db)
+		worshipDB := sqlite.NewWorshipDB(db)
+		worshipUseCase := usecase.NewWorshipUseCase(worshipDB, momentDB, songDB, albumDB, sectionDB, fileManager)
+		worshipHandler := handler.NewWorshipHandler(worshipUseCase)
+		worshipHandler.Update(w, r)
+	}).Methods("PATCH")
+
+	router.HandleFunc("/worships/{id}", func(w http.ResponseWriter, r *http.Request) {
+		db, err := openDB(dbPath)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer db.Close()
+
+		albumDB := sqlite.NewAlbumDB(db)
+		songDB := sqlite.NewSongDB(db)
+		momentDB := sqlite.NewMomentDB(db)
+		sectionDB := sqlite.NewSectionDB(db)
+		worshipDB := sqlite.NewWorshipDB(db)
+		worshipUseCase := usecase.NewWorshipUseCase(worshipDB, momentDB, songDB, albumDB, sectionDB, fileManager)
+		worshipHandler := handler.NewWorshipHandler(worshipUseCase)
+		worshipHandler.Delete(w, r)
+	}).Methods("DELETE")
+
 
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
 	originsOk := handlers.AllowedOrigins([]string{"*"})
@@ -131,4 +491,12 @@ func pong(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+}
+
+func openDB(dbPath string) (*sql.DB, error) {
+	db, err := sql.Open("sqlite3", dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("erro ao abrir o banco de dados: %w", err)
+	}
+	return db, nil
 }
