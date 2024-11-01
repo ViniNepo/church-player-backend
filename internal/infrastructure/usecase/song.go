@@ -36,6 +36,26 @@ func (s *songUseCase) Create(song *domain.Song, fileHeader *multipart.FileHeader
 		if (st > 96 && st < 123) || (st > 64 && st < 91) || (st == 8226 || st == 45 || st == 46 || st == 32) || (st > 47 && st < 58) {
 			fileName = fileName + string(st)
 		}
+
+		if string(st) == "á" || string(st) == "â" || string(st) == "ã" || string(st) == "ä" || string(st) == "å" {
+			fileName = fileName + "a"
+		}
+
+		if string(st) == "é" || string(st) == "è" || string(st) == "ê" || string(st) == "ë" || string(st) == "&" {
+			fileName = fileName + "e"
+		}
+
+		if string(st) == "í" || string(st) == "ì" || string(st) == "î" || string(st) == "ï" {
+			fileName = fileName + "i"
+		}
+
+		if string(st) == "ó" || string(st) == "ò" || string(st) == "ô" || string(st) == "õ" || string(st) == "ö" {
+			fileName = fileName + "o"
+		}
+
+		if string(st) == "ú" || string(st) == "ù" || string(st) == "û" || string(st) == "ü" {
+			fileName = fileName + "u"
+		}
 	}
 	song.File = fileName
 	fileHeader.Filename = fileName
