@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"path/filepath"
 
@@ -21,6 +22,7 @@ func NewFileControlHandler(fileControlUseCase usecase.FileControlUseCase) *FileC
 
 func (h *FileControlHandler) Play(w http.ResponseWriter, r *http.Request) {
 	filePath := mux.Vars(r)["path"]
+	log.Println(filePath)
 
 	if filePath == "" {
 		http.Error(w, "file path is required", http.StatusBadRequest)
@@ -30,6 +32,7 @@ func (h *FileControlHandler) Play(w http.ResponseWriter, r *http.Request) {
 	destPath := filepath.Join("dist/church-player/assets/files", filePath)
 	err := h.fileControlUseCase.Play(destPath)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
 	}

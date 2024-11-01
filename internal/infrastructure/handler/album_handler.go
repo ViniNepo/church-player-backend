@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"os"
 
@@ -26,18 +27,21 @@ func (h *AlbumHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&albumDTO)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	album, err := domain.NewAlbum(albumDTO)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = h.albumUseCase.CreateAlbum(album)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
 	}
@@ -55,6 +59,7 @@ func (h *AlbumHandler) FindByID(w http.ResponseWriter, r *http.Request) {
 
 	album, err := h.albumUseCase.FindByID(id)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
 	}
@@ -68,6 +73,7 @@ func (h *AlbumHandler) FindByID(w http.ResponseWriter, r *http.Request) {
 func (h *AlbumHandler) FindAll(w http.ResponseWriter, r *http.Request) {
 	albums, err := h.albumUseCase.FindAll()
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
 	}
@@ -83,6 +89,7 @@ func (h *AlbumHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if albumData != "" {
 		err := json.Unmarshal([]byte(albumData), &album)
 		if err != nil {
+			log.Println(err)
 			http.Error(w, "Invalid album data", http.StatusBadRequest)
 			return
 		}
@@ -91,6 +98,7 @@ func (h *AlbumHandler) Update(w http.ResponseWriter, r *http.Request) {
 	// Tenta analisar o formulário multipart (pode conter arquivos)
 	err := r.ParseMultipartForm(50 << 20) // 100 MB
 	if err != nil && err != http.ErrNotMultipart {
+		log.Println(err)
 		http.Error(w, "Could not parse multipart form", http.StatusBadRequest)
 		return
 	}
@@ -104,6 +112,7 @@ func (h *AlbumHandler) Update(w http.ResponseWriter, r *http.Request) {
 		for _, fileHeader := range files {
 			err = h.albumUseCase.Update(&album, fileHeader)
 			if err != nil {
+				log.Println(err)
 				http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 				return
 			}
@@ -112,6 +121,7 @@ func (h *AlbumHandler) Update(w http.ResponseWriter, r *http.Request) {
 		// Se não houver arquivos, apenas atualiza o álbum sem arquivo
 		err = h.albumUseCase.Update(&album, nil)
 		if err != nil {
+			log.Println(err)
 			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 			return
 		}
@@ -130,6 +140,7 @@ func (h *AlbumHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	err := h.albumUseCase.Delete(id)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 		return
 	}

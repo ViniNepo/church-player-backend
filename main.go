@@ -31,10 +31,13 @@ func main() {
 	}
 
 	// Obtém o diretório onde o binário está localizado
-	executableDir := filepath.Dir(executable)
+	//executableDir := filepath.Dir(executable)
+	executableDir := "C:\\Users\\vinep\\Downloads\\ChurchPlayer\\ChurchPlayer\\resources\\app\\"
 
 	// Constrói o caminho para o arquivo que está na mesma pasta do binário
 	dbPath := filepath.Join(executableDir, "church.db")
+	log.Println(executable)
+	log.Println(dbPath)
 
 	// Configurar o roteador Gorilla Mux
 	router := mux.NewRouter()
@@ -147,9 +150,9 @@ func main() {
 
 		songDB := sqlite.NewSongDB(db)
 		songUseCase := usecase.NewSongUseCase(songDB, fileManager)
-		albumHandler := handler.NewSongHandler(songUseCase)
+		songHandler := handler.NewSongHandler(songUseCase)
 
-		albumHandler.Delete(w, r)
+		songHandler.Create(w, r)
 	}).Methods("POST")
 
 	router.HandleFunc("/songs", func(w http.ResponseWriter, r *http.Request) {
@@ -162,9 +165,9 @@ func main() {
 
 		songDB := sqlite.NewSongDB(db)
 		songUseCase := usecase.NewSongUseCase(songDB, fileManager)
-		albumHandler := handler.NewSongHandler(songUseCase)
+		songHandler := handler.NewSongHandler(songUseCase)
 
-		albumHandler.FindAll(w, r)
+		songHandler.FindAll(w, r)
 	}).Methods("GET")
 
 	router.HandleFunc("/songs/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -177,9 +180,9 @@ func main() {
 
 		songDB := sqlite.NewSongDB(db)
 		songUseCase := usecase.NewSongUseCase(songDB, fileManager)
-		albumHandler := handler.NewSongHandler(songUseCase)
+		songHandler := handler.NewSongHandler(songUseCase)
 
-		albumHandler.FindById(w, r)
+		songHandler.FindById(w, r)
 	}).Methods("GET")
 
 	router.HandleFunc("/songs", func(w http.ResponseWriter, r *http.Request) {
@@ -192,9 +195,9 @@ func main() {
 
 		songDB := sqlite.NewSongDB(db)
 		songUseCase := usecase.NewSongUseCase(songDB, fileManager)
-		albumHandler := handler.NewSongHandler(songUseCase)
+		songHandler := handler.NewSongHandler(songUseCase)
 
-		albumHandler.Update(w, r)
+		songHandler.Update(w, r)
 	}).Methods("PATCH")
 
 	router.HandleFunc("/songs/orders", func(w http.ResponseWriter, r *http.Request) {
@@ -207,9 +210,9 @@ func main() {
 
 		songDB := sqlite.NewSongDB(db)
 		songUseCase := usecase.NewSongUseCase(songDB, fileManager)
-		albumHandler := handler.NewSongHandler(songUseCase)
+		songHandler := handler.NewSongHandler(songUseCase)
 
-		albumHandler.UpdateOrder(w, r)
+		songHandler.UpdateOrder(w, r)
 	}).Methods("PATCH")
 
 	router.HandleFunc("/songs/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -222,9 +225,9 @@ func main() {
 
 		songDB := sqlite.NewSongDB(db)
 		songUseCase := usecase.NewSongUseCase(songDB, fileManager)
-		albumHandler := handler.NewSongHandler(songUseCase)
+		songHandler := handler.NewSongHandler(songUseCase)
 
-		albumHandler.Delete(w, r)
+		songHandler.Delete(w, r)
 	}).Methods("DELETE")
 
 	router.HandleFunc("/moments", func(w http.ResponseWriter, r *http.Request) {
@@ -377,7 +380,6 @@ func main() {
 		sectionHandler.Delete(w, r)
 	}).Methods("DELETE")
 
-
 	router.HandleFunc("/worships", func(w http.ResponseWriter, r *http.Request) {
 		db, err := openDB(dbPath)
 		if err != nil {
@@ -467,7 +469,6 @@ func main() {
 		worshipHandler := handler.NewWorshipHandler(worshipUseCase)
 		worshipHandler.Delete(w, r)
 	}).Methods("DELETE")
-
 
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
 	originsOk := handlers.AllowedOrigins([]string{"*"})

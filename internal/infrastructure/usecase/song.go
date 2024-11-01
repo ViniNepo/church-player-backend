@@ -31,7 +31,16 @@ func NewSongUseCase(songGateway gateway.Song, manager filemanager.FileManager) S
 }
 
 func (s *songUseCase) Create(song *domain.Song, fileHeader *multipart.FileHeader) error {
+	fileName := ""
+	for _, st := range song.File {
+		if (st > 96 && st < 123) || (st > 64 && st < 91) || (st == 8226 || st == 45 || st == 46 || st == 32) || (st > 47 && st < 58) {
+			fileName = fileName + string(st)
+		}
+	}
+	song.File = fileName
+	fileHeader.Filename = fileName
 	destinationPath := filepath.Join("dist/church-player/assets/files", song.File)
+
 	if s.fileManager.Exists(destinationPath) {
 		return fmt.Errorf("file %s already exists", song.File)
 	}
