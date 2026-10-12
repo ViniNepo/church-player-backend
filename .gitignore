@@ -1,0 +1,13 @@
+# Build output
+church_player_backend
+church_player_backend.exe
+*.exe
+/bin/
+
+# Local database (create it from schema.sql)
+*.db
+
+# Editor and OS files
+.idea/
+.vscode/
+.DS_Store
